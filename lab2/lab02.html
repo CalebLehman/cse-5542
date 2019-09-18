@@ -1,0 +1,83 @@
+<!-- Author - Caleb Lehman (lehman.346) -->
+<!-- Date - 9/17/2019 -->
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Lab 01 Caleb Lehman (.346)</title>
+    
+    <!-- fragment shader -->
+    <script id="frag-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 vColor;
+
+        void main(void) {
+            gl_FragColor = vColor;
+        }
+    </script>
+    <!-- vertex shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec3 position;
+        attribute vec4 color;
+        varying vec4 vColor;
+        
+        void main(void) {
+            gl_Position = vec4(position, 1.0);
+            vColor = color;
+            gl_PointSize = 2.0;
+        }
+    </script>
+    
+    <script type="text/javascript" src="setup_shaders.js"></script>
+    <script type="text/javascript" src="lab01.js"></script>
+</head>
+
+<body onload="graphics.startGL(); user_handler.startUserHandler();">
+    <div style="float:left; padding-right:20px;">
+    <canvas id="canvas" style="border:2px solid #000000;" width="250" height="250"></canvas><br/>
+    </div>
+
+    <div style="float:left">
+    <h4>Background Color:</h4>
+    <button type="button" onclick="graphics.setBackground(1, 1, 1, 1)">White</button>
+    <button type="button" onclick="graphics.setBackground(0, 0, 0, 1)">Black</button>
+    <button type="button" onclick="graphics.setBackground(1, 0, 0, 1)">Red</button>
+    <button type="button" onclick="graphics.setBackground(0, 1, 0, 1)">Green</button>
+    <button type="button" onclick="graphics.setBackground(0, 0, 1, 1)">Blue</button>
+
+    <h4>Current Shape:</h4>
+    <p id="currShapeText">No shape selected</p>
+    <ul>
+        <li>p = point</li>
+        <li>h = horizontal line</li>
+        <li>v = vertical line</li>
+        <li>t = triangle</li>
+        <li>q = square</li>
+        <li>o = circle</li>
+    </ul>
+
+    <h4>Current Color:</h4>
+    <p id="currColorText">No color selected</p>
+    <ul>
+        <li>r = red</li>
+        <li>g = green</li>
+        <li>b = blue</li>
+    </ul>
+
+    <h4>Current Mouse position in canvas (normalized coordinates):</h4>
+    <p id="mousePos">Ready</p>
+    </div>
+
+    <br style="clear:both" />
+
+    <h4>Scale Shapes:</h4>
+    <input type="range" id="shapeScaleSlider" min="0" max="200" onchange="user_handler.currShapeScale = this.value / 100.0;">
+
+    <h4>Scale Canvas:</h4>
+    <input type="range" id="canvasScaleSlider" min="0" max="200" oninput="user_handler.currCanvasScale = this.value / 100.0; canvas = document.getElementById('canvas'); graphics.resize(canvas, this.value / 100.0);">
+
+</body>
+
+</html>
