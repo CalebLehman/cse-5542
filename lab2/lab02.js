@@ -1,17 +1,29 @@
 // Author - Caleb Lehman (lehman.346)
 // Date - TODO
 
-var user_handler = (function() {
+var userHandler = (function() {
         var mouseX;
         var mouseY;
         var currColor = null;
         var currShape = null;
 
         // Initialization function for user handler
-        function startUserHandler() {
-            document.addEventListener('keydown', userKeyDown, false);
-            document.addEventListener('mousemove', updateMouse, false);
-            document.addEventListener('mousedown', userMouseDown, false);
+        function init() {
+            document.addEventListener(
+                'keydown',
+                userKeyDown,
+                false
+            );
+            document.addEventListener(
+                'mousemove',
+                updateMouse,
+                false
+            );
+            document.addEventListener(
+                'mousedown',
+                userMouseDown,
+                false
+            );
         }
 
         // Reset all user data and associated graphics
@@ -22,8 +34,10 @@ var user_handler = (function() {
 
         // Process user key inputs
         function userKeyDown(event) {
-            var shapeString = document.getElementById("currShapeText").innerHTML;
-            var colorString = document.getElementById("currColorText").innerHTML;
+            var shapeString =
+                document.getElementById("currShapeText").innerHTML;
+            var colorString =
+                document.getElementById("currColorText").innerHTML;
             switch (event.keyCode) {
                 // Shape keys
                 case 80: // "p"
@@ -67,24 +81,31 @@ var user_handler = (function() {
 
                 // Misc. keys
                 case 68: // "d"
-                    graphics.reDraw();
+                    graphics.draw();
                     break;
                 case 67: // "c"
                     clearUserData();
-                    graphics.reDraw();
+                    graphics.draw();
                     break;
             }
 
-            document.getElementById("currShapeText").innerHTML = shapeString;
-            document.getElementById("currColorText").innerHTML = colorString;
+            document.getElementById("currShapeText").innerHTML =
+                shapeString;
+            document.getElementById("currColorText").innerHTML =
+                colorString;
         }
 
         // Process a user mouse down input
         function userMouseDown(event) {
             updateMouse(event);
             if ((mouseX != null) && (mouseY != null)) {
-                graphics.addShape(currShape, currColor, mouseX, mouseY);
-                graphics.reDraw();
+                graphics.addShape(
+                    currShape,
+                    currColor,
+                    mouseX,
+                    mouseY
+                );
+                graphics.draw();
             }
         }
 
@@ -111,7 +132,7 @@ var user_handler = (function() {
 
     return {
         // *** PUBLIC ***
-        startUserHandler: startUserHandler
+        init: init
     };
 }());
 
@@ -120,7 +141,7 @@ var user_handler = (function() {
 
 var graphics = (function() {
         // *** PRIVATE ***
-        var gl_context;
+        var gl;
         var shaderProgram;
         var clrColor = [1.0, 1.0, 1.0, 1.0];
 
@@ -217,33 +238,65 @@ var graphics = (function() {
             pushMouseCoords(trisVertices, x, y - trisUnit);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - trisUnit * 1.73 / 2, y + trisUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x - trisUnit * 1.73 / 2,
+                y + trisUnit / 2
+            );
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + trisUnit * 1.73 / 2, y + trisUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x + trisUnit * 1.73 / 2,
+                y + trisUnit / 2
+            );
         }
 
         // Add square (with appropriate color and position) to graphics data
         function addSquare(color, x, y) {
             // Tri 1
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - squaresUnit / 2, y + squaresUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x - squaresUnit / 2,
+                y + squaresUnit / 2
+            );
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + squaresUnit / 2, y + squaresUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x + squaresUnit / 2,
+                y + squaresUnit / 2
+            );
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - squaresUnit / 2, y - squaresUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x - squaresUnit / 2,
+                y - squaresUnit / 2
+            );
 
             // Tri 2
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + squaresUnit / 2, y + squaresUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x + squaresUnit / 2,
+                y + squaresUnit / 2
+            );
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + squaresUnit / 2, y - squaresUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x + squaresUnit / 2,
+                y - squaresUnit / 2
+            );
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - squaresUnit / 2, y - squaresUnit / 2);
+            pushMouseCoords(
+                trisVertices,
+                x - squaresUnit / 2,
+                y - squaresUnit / 2
+            );
         }
 
         // Add circle (with appropriate color and position) to graphics data
@@ -297,153 +350,154 @@ var graphics = (function() {
             }
         }
 
-        function initGL(canvas) {
-            gl_context = canvas.getContext("experimental-webgl");
-            gl_context.viewportWidth  = canvas.width;
-            gl_context.viewportHeight = canvas.height;
-        }
-
         // Use points/lines/triangles color and position
         // data to fill buffers
         function createBuffers() {
             // Points buffers
-            pointsVertexPositionBuffer = gl_context.createBuffer();
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, pointsVertexPositionBuffer);
-            gl_context.bufferData(gl_context.ARRAY_BUFFER, new Float32Array(pointsVertices), gl_context.STATIC_DRAW);
+            pointsVertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexPositionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pointsVertices), gl.STATIC_DRAW);
             pointsVertexPositionBuffer.itemSize = 3;
             pointsVertexPositionBuffer.numItems = pointsVertices.length / 3;
 
-            pointsVertexColorBuffer = gl_context.createBuffer();
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, pointsVertexColorBuffer);
-            gl_context.bufferData(gl_context.ARRAY_BUFFER, new Float32Array(pointsColors), gl_context.STATIC_DRAW);
+            pointsVertexColorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexColorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pointsColors), gl.STATIC_DRAW);
             pointsVertexColorBuffer.itemSize = 4;
             pointsVertexColorBuffer.numItems = pointsColors.length / 4;
 
 
             // Lines buffers
-            linesVertexPositionBuffer = gl_context.createBuffer();
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, linesVertexPositionBuffer);
-            gl_context.bufferData(gl_context.ARRAY_BUFFER, new Float32Array(linesVertices), gl_context.STATIC_DRAW);
+            linesVertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexPositionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(linesVertices), gl.STATIC_DRAW);
             linesVertexPositionBuffer.itemSize = 3;
             linesVertexPositionBuffer.numItems = linesVertices.length / 3;
 
-            linesVertexColorBuffer = gl_context.createBuffer();
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, linesVertexColorBuffer);
-            gl_context.bufferData(gl_context.ARRAY_BUFFER, new Float32Array(linesColors), gl_context.STATIC_DRAW);
+            linesVertexColorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexColorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(linesColors), gl.STATIC_DRAW);
             linesVertexColorBuffer.itemSize = 4;
             linesVertexColorBuffer.numItems = linesColors.length / 4;
 
 
             // Tris buffers
-            trisVertexPositionBuffer = gl_context.createBuffer();
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, trisVertexPositionBuffer);
-            gl_context.bufferData(gl_context.ARRAY_BUFFER, new Float32Array(trisVertices), gl_context.STATIC_DRAW);
+            trisVertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexPositionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(trisVertices), gl.STATIC_DRAW);
             trisVertexPositionBuffer.itemSize = 3;
             trisVertexPositionBuffer.numItems = trisVertices.length / 3;
 
-            trisVertexColorBuffer = gl_context.createBuffer();
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, trisVertexColorBuffer);
-            gl_context.bufferData(gl_context.ARRAY_BUFFER, new Float32Array(trisColors), gl_context.STATIC_DRAW);
+            trisVertexColorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexColorBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(trisColors), gl.STATIC_DRAW);
             trisVertexColorBuffer.itemSize = 4;
             trisVertexColorBuffer.numItems = trisColors.length / 4;
         }
             
         // Uses current information to draw scene
         function drawScene() {
-            var width  = gl_context.viewportWidth;
-            var height = gl_context.viewportHeight;
+            var width  = gl.viewportWidth;
+            var height = gl.viewportHeight;
 
             // Clear
-            gl_context.viewport(0, 0, width, height);
-            gl_context.clear(gl_context.COLOR_BUFFER_BIT | gl_context.DEPTH_BUFFER_BIT);
+            gl.viewport(0, 0, width, height);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             // Draw Points
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, pointsVertexPositionBuffer);
-            gl_context.vertexAttribPointer(
+            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexPositionBuffer);
+            gl.vertexAttribPointer(
                 shaderProgram.vertexPositionAttribute,
                 pointsVertexPositionBuffer.itemSize,
-                gl_context.FLOAT,
+                gl.FLOAT,
                 false,
                 0,
                 0
             );
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, pointsVertexColorBuffer);
-            gl_context.vertexAttribPointer(
+            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexColorBuffer);
+            gl.vertexAttribPointer(
                 shaderProgram.vertexColorAttribute,
                 pointsVertexColorBuffer.itemSize,
-                gl_context.FLOAT,
+                gl.FLOAT,
                 false,
                 0,
                 0
             );
-            gl_context.drawArrays(gl_context.POINTS, 0, pointsVertexPositionBuffer.numItems);
+            gl.drawArrays(gl.POINTS, 0, pointsVertexPositionBuffer.numItems);
 
             // Draw Lines
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, linesVertexPositionBuffer);
-            gl_context.vertexAttribPointer(
+            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexPositionBuffer);
+            gl.vertexAttribPointer(
                 shaderProgram.vertexPositionAttribute,
                 linesVertexPositionBuffer.itemSize,
-                gl_context.FLOAT,
+                gl.FLOAT,
                 false,
                 0,
                 0
             );
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, linesVertexColorBuffer);
-            gl_context.vertexAttribPointer(
+            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexColorBuffer);
+            gl.vertexAttribPointer(
                 shaderProgram.vertexColorAttribute,
                 linesVertexColorBuffer.itemSize,
-                gl_context.FLOAT,
+                gl.FLOAT,
                 false,
                 0,
                 0
             );
-            gl_context.drawArrays(gl_context.LINES, 0, linesVertexPositionBuffer.numItems);
+            gl.drawArrays(gl.LINES, 0, linesVertexPositionBuffer.numItems);
 
             // Draw Tris
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, trisVertexPositionBuffer);
-            gl_context.vertexAttribPointer(
+            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexPositionBuffer);
+            gl.vertexAttribPointer(
                 shaderProgram.vertexPositionAttribute,
                 trisVertexPositionBuffer.itemSize,
-                gl_context.FLOAT,
+                gl.FLOAT,
                 false,
                 0,
                 0
             );
-            gl_context.bindBuffer(gl_context.ARRAY_BUFFER, trisVertexColorBuffer);
-            gl_context.vertexAttribPointer(
+            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexColorBuffer);
+            gl.vertexAttribPointer(
                 shaderProgram.vertexColorAttribute,
                 trisVertexColorBuffer.itemSize,
-                gl_context.FLOAT,
+                gl.FLOAT,
                 false,
                 0,
                 0
             );
-            gl_context.drawArrays(gl_context.TRIANGLES, 0, trisVertexPositionBuffer.numItems);
+            gl.drawArrays(gl.TRIANGLES, 0, trisVertexPositionBuffer.numItems);
         }
 
         // Initialize WebGL context and set up shaders
-        function startGL() {
+        function init() {
             // Set up context
             var canvas = document.getElementById("canvas");
-            gl_context = canvas.getContext("experimental-webgl");
-            gl_context.viewportWidth  = canvas.width;
-            gl_context.viewportHeight = canvas.height;
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth  = canvas.width;
+            gl.viewportHeight = canvas.height;
 
             // Set up shaders
-            shaderProgram = setup_shaders.initShaders(gl_context);
+            shaderProgram = setup_shaders.initShaders(gl);
 
-            shaderProgram.vertexPositionAttribute = gl_context.getAttribLocation(shaderProgram, "position");
-            gl_context.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+            shaderProgram.vertexPositionAttribute =
+                gl.getAttribLocation(shaderProgram, "position");
+            gl.enableVertexAttribArray(
+                shaderProgram.vertexPositionAttribute
+            );
 
-            shaderProgram.vertexColorAttribute = gl_context.getAttribLocation(shaderProgram, "color");
-            gl_context.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+            shaderProgram.vertexColorAttribute =
+                gl.getAttribLocation(shaderProgram, "color");
+            gl.enableVertexAttribArray(
+                shaderProgram.vertexColorAttribute
+            );
 
-            reDraw();
+            // Initial draw
+            draw();
         }
 
         // Redraws the scene
-        function reDraw() {
-            gl_context.clearColor(
+        function draw() {
+            gl.clearColor(
                 clrColor[0],
                 clrColor[1],
                 clrColor[2],
@@ -467,7 +521,7 @@ var graphics = (function() {
 
         function setBackground(r, g, b, alpha) {
             clrColor = [r, g, b, alpha];
-            reDraw();
+            draw();
         }
 
     return {
@@ -475,21 +529,12 @@ var graphics = (function() {
 
         addShape: addShape,
 
-        initGL: initGL,
+        init: init,
 
-        createBuffers: createBuffers,
-            
-        drawScene: drawScene,
-
-        startGL: startGL,
-
-        reDraw: reDraw,
+        draw: draw,
 
         clear: clear,
 
         setBackground: setBackground,
-
-        // TODO
-        linesVertexPositionBuffer: linesVertexPositionBuffer
     };
 }());
