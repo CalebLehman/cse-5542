@@ -1,13 +1,11 @@
 // Author - Caleb Lehman (lehman.346)
-// Date - 9/17/2019
+// Date - TODO
 
 var user_handler = (function() {
         var mouseX;
         var mouseY;
         var currColor = null;
         var currShape = null;
-        var currShapeScale = 1.00;
-        var currCanvasScale = 1.00;
 
         // Initialization function for user handler
         function startUserHandler() {
@@ -18,15 +16,6 @@ var user_handler = (function() {
 
         // Reset all user data and associated graphics
         function clearUserData() {
-            // Reset scaling
-            document.getElementById("shapeScaleSlider").value = 100.0;
-            document.getElementById("canvasScaleSlider").value = 100.0;
-            var canvas = document.getElementById("canvas");
-            graphics.resize(canvas, 1.0);
-
-            user_handler.currShapeScale = 1.0;
-            user_handler.currCanvasScale = 1.0;
-
             // Tell graphics object to clear itself
             graphics.clear();
         }
@@ -122,16 +111,9 @@ var user_handler = (function() {
 
     return {
         // *** PUBLIC ***
-        startUserHandler: startUserHandler,
-        currShapeScale: currShapeScale,
-        currCanvasScale: currCanvasScale
+        startUserHandler: startUserHandler
     };
 }());
-
-// Retrieve "global" scaling factor which combines shape and canvas scaling
-function globalScale() {
-    return user_handler.currShapeScale * user_handler.currCanvasScale;
-}
 
 
 
@@ -214,54 +196,54 @@ var graphics = (function() {
         // Add horizontal line segment (with appropriate color and position) to graphics data
         function addHLine(color, x, y) {
             pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x - globalScale() * linesUnit / 2, y);
+            pushMouseCoords(linesVertices, x - linesUnit / 2, y);
 
             pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x + globalScale() * linesUnit / 2, y);
+            pushMouseCoords(linesVertices, x + linesUnit / 2, y);
         }
 
         // Add vertical line segment (with appropriate color and position) to graphics data
         function addVLine(color, x, y) {
             pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x, y - globalScale() * linesUnit / 2);
+            pushMouseCoords(linesVertices, x, y - linesUnit / 2);
 
             pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x, y + globalScale() * linesUnit / 2);
+            pushMouseCoords(linesVertices, x, y + linesUnit / 2);
         }
 
         // Add triangle (with appropriate color and position) to graphics data
         function addTri(color, x, y) {
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x, y - globalScale() * trisUnit);
+            pushMouseCoords(trisVertices, x, y - trisUnit);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - globalScale() * trisUnit * 1.73 / 2, y + globalScale() * trisUnit / 2);
+            pushMouseCoords(trisVertices, x - trisUnit * 1.73 / 2, y + trisUnit / 2);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + globalScale() * trisUnit * 1.73 / 2, y + globalScale() * trisUnit / 2);
+            pushMouseCoords(trisVertices, x + trisUnit * 1.73 / 2, y + trisUnit / 2);
         }
 
         // Add square (with appropriate color and position) to graphics data
         function addSquare(color, x, y) {
             // Tri 1
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - globalScale() * squaresUnit / 2, y + globalScale() * squaresUnit / 2);
+            pushMouseCoords(trisVertices, x - squaresUnit / 2, y + squaresUnit / 2);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + globalScale() * squaresUnit / 2, y + globalScale() * squaresUnit / 2);
+            pushMouseCoords(trisVertices, x + squaresUnit / 2, y + squaresUnit / 2);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - globalScale() * squaresUnit / 2, y - globalScale() * squaresUnit / 2);
+            pushMouseCoords(trisVertices, x - squaresUnit / 2, y - squaresUnit / 2);
 
             // Tri 2
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + globalScale() * squaresUnit / 2, y + globalScale() * squaresUnit / 2);
+            pushMouseCoords(trisVertices, x + squaresUnit / 2, y + squaresUnit / 2);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x + globalScale() * squaresUnit / 2, y - globalScale() * squaresUnit / 2);
+            pushMouseCoords(trisVertices, x + squaresUnit / 2, y - squaresUnit / 2);
 
             pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x - globalScale() * squaresUnit / 2, y - globalScale() * squaresUnit / 2);
+            pushMouseCoords(trisVertices, x - squaresUnit / 2, y - squaresUnit / 2);
         }
 
         // Add circle (with appropriate color and position) to graphics data
@@ -271,15 +253,15 @@ var graphics = (function() {
                 pushColor(trisColors, color);
                 pushMouseCoords(
                     trisVertices,
-                    x + globalScale() * circlesUnit * Math.cos(2*i*Math.PI / n),
-                    y - globalScale() * circlesUnit * Math.sin(2*i*Math.PI / n)
+                    x + circlesUnit * Math.cos(2*i*Math.PI / n),
+                    y - circlesUnit * Math.sin(2*i*Math.PI / n)
                 );
 
                 pushColor(trisColors, color);
                 pushMouseCoords(
                     trisVertices,
-                    x + globalScale() * circlesUnit * Math.cos(2*(i+1)*Math.PI / n),
-                    y - globalScale() * circlesUnit * Math.sin(2*(i+1)*Math.PI / n)
+                    x + circlesUnit * Math.cos(2*(i+1)*Math.PI / n),
+                    y - circlesUnit * Math.sin(2*(i+1)*Math.PI / n)
                 );
 
                 pushColor(trisColors, color);
@@ -319,15 +301,6 @@ var graphics = (function() {
             gl_context = canvas.getContext("experimental-webgl");
             gl_context.viewportWidth  = canvas.width;
             gl_context.viewportHeight = canvas.height;
-        }
-
-        // Scale the canvas and redraw
-        function resize(canvas, scale) {
-            canvas.width  = 250 * scale;
-            canvas.height = 250 * scale;
-            gl_context.viewportWidth  = canvas.width;
-            gl_context.viewportHeight = canvas.height;
-            reDraw();
         }
 
         // Use points/lines/triangles color and position
@@ -503,8 +476,6 @@ var graphics = (function() {
         addShape: addShape,
 
         initGL: initGL,
-
-        resize: resize,
 
         createBuffers: createBuffers,
             
