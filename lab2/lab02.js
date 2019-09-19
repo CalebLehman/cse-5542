@@ -10,17 +10,17 @@ var userHandler = (function() {
         // Initialization function for user handler
         function init() {
             document.addEventListener(
-                'keydown',
+                "keydown",
                 userKeyDown,
                 false
             );
             document.addEventListener(
-                'mousemove',
+                "mousemove",
                 updateMouse,
                 false
             );
             document.addEventListener(
-                'mousedown',
+                "mousedown",
                 userMouseDown,
                 false
             );
@@ -81,11 +81,11 @@ var userHandler = (function() {
 
                 // Misc. keys
                 case 68: // "d"
-                    graphics.draw();
+                    graphics.drawScene();
                     break;
                 case 67: // "c"
                     clearUserData();
-                    graphics.draw();
+                    graphics.drawScene();
                     break;
             }
 
@@ -101,14 +101,13 @@ var userHandler = (function() {
             if ((mouseX != null) && (mouseY != null)) {
                 graphics.addShape(
                     currShape,
-                    currColor,
                     mouseX,
-                    mouseY
+                    mouseY,
+                    currColor
                 );
-                graphics.draw();
+                graphics.drawScene();
             }
         }
-
 
         // Update stored mouse coordinates to match NDC
         // coordinates of an event
@@ -137,401 +136,296 @@ var userHandler = (function() {
 }());
 
 
-
+class Shape {
+    constructor(type, trans, rot, scale, color) {
+        this.type  = type;
+        this.trans = trans;
+        this.rot   = rot;
+        this.scale = scale;
+        this.color = color;
+    }
+}
 
 var graphics = (function() {
-        // *** PRIVATE ***
-        var gl;
-        var shaderProgram;
-        var clrColor = [1.0, 1.0, 1.0, 1.0];
+    // *** VARIABLES ***
+    var gl;
+    var shaderProgram;
 
-        // Data to track information about points
-        var pointsVertexPositionBuffer;
-        var pointsVertices = [];
-        var pointsColors = [];
+    // Current list of shapes to draw
+    var shapes = []; // Shape type, translation, rotation, color
 
-        // Data to track information about lines
-        var linesVertexPositionBuffer;
-        var linesVertices = [];
-        var linesColors = [];
-        var linesUnit = 30; // Some kind of base units for sizing lines
+    // Buffers for each shape type
+    var pointVertexBuff;
+    var lineVertexBuff;
+    var triVertexBuff;
+    var squareVertexBuff;
+    var circleVertexBuff;
 
-        // Data to track information about triangles (+ squares, + circles)
-        var trisVertexPositionBuffer;
-        var trisVertices = [];
-        var trisColors = [];
-        var trisUnit = 40; // Some kind of base units for sizing triangles
-        var squaresUnit = 40; // Some kind of base units for sizing squares
-        var circlesUnit = 30; // Some kind of base units for sizing circles
+    // Buffers for each color to use
+    const MAX_LENGTH = 32; // Upper bound on number of vertices any one shape can use
+    var rBuff;
+    var gBuff;
+    var bBuff;
+    var clrColor = [1.0, 1.0, 1.0, 1.0];
 
-        // Pushes the appropriate color (4 float values) onto array
-        function pushColor(array, color) {
-            switch (color) {
-                case "r":
-                    // Red
-                    array.push(1.0);
-                    array.push(0.0);
-                    array.push(0.0);
-                    array.push(1.0);
-                    break;
-                case "g":
-                    // Green
-                    array.push(0.0);
-                    array.push(1.0);
-                    array.push(0.0);
-                    array.push(1.0);
-                    break;
-                case "b":
-                    // Blue
-                    array.push(0.0);
-                    array.push(0.0);
-                    array.push(1.0);
-                    array.push(1.0);
-                    break;
-            }
-        }
+    // *** INITIALIZATION ***
+    // Initialize WebGL context and set up shaders
+    function init() {
+        // Set up context
+        var canvas = document.getElementById("canvas");
+        gl = canvas.getContext("experimental-webgl");
+        gl.viewportWidth  = canvas.width;
+        gl.viewportHeight = canvas.height;
 
-        // Pushes appropriate NDC coordinates (3 float values) onto array
-        function pushMouseCoords(array, x, y) {
-            function mouse2NDC(x_val, y_val) {
-                var canvas = document.getElementById("canvas")
-                return {
-                    x: -1 + 2 * x_val / canvas.width,
-                    y: 1 - 2 * y_val / canvas.width
-                };
-            }
+        // Set up shaders
+        shaderProgram = setup_shaders.initShaders(gl);
+        shaderProgram.vertexPositionAttribute =
+            gl.getAttribLocation(shaderProgram, "position");
+        gl.enableVertexAttribArray(
+            shaderProgram.vertexPositionAttribute
+        );
+        shaderProgram.vertexColorAttribute =
+            gl.getAttribLocation(shaderProgram, "color");
+        gl.enableVertexAttribArray(
+            shaderProgram.vertexColorAttribute
+        );
 
-            point_NDC = mouse2NDC(x, y);
-            array.push(point_NDC.x);
-            array.push(point_NDC.y);
-            array.push(0.0);
-        }
+        // Initialize shape buffers
+        initPoint();
+        initLine();
+        initTri();
+        initSquare();
+        initCircle();
 
+        // Initialize color buffers
+        initColors();
 
-        // Add point (with appropriate color and position) to graphics data
-        function addPoint(color, x, y) {
-            pushColor(pointsColors, color);
-            pushMouseCoords(pointsVertices, x, y);
-        }
+        // Initial draw
+        drawScene();
+    }
 
-        // Add horizontal line segment (with appropriate color and position) to graphics data
-        function addHLine(color, x, y) {
-            pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x - linesUnit / 2, y);
+    function initPoint() {
+        pointVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, pointVertexBuff);
 
-            pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x + linesUnit / 2, y);
-        }
+        var vertices = new Float32Array([0.0, 0.0, 0.0]);
+        vertices = vertices.map(function(val) { return val * 0.3; });
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        // Add vertical line segment (with appropriate color and position) to graphics data
-        function addVLine(color, x, y) {
-            pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x, y - linesUnit / 2);
+        pointVertexBuff.itemSize = 3; // Three values per vertex
+        pointVertexBuff.numItems = 1; // Single vertex
+        pointVertexBuff.mode     = gl.POINTS;
+    }
 
-            pushColor(linesColors, color);
-            pushMouseCoords(linesVertices, x, y + linesUnit / 2);
-        }
+    function initLine() {
+        lineVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexBuff);
 
-        // Add triangle (with appropriate color and position) to graphics data
-        function addTri(color, x, y) {
-            pushColor(trisColors, color);
-            pushMouseCoords(trisVertices, x, y - trisUnit);
+        var vertices = new Float32Array(
+            [ 1.0, 0.0, 0.0
+            ,-1.0, 0.0, 0.0 ]
+        );
+        vertices = vertices.map(function(val) { return val * 0.3; });
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x - trisUnit * 1.73 / 2,
-                y + trisUnit / 2
-            );
+        lineVertexBuff.itemSize = 3; // Three values per vertex
+        lineVertexBuff.numItems = 2; // Two vertices
+        lineVertexBuff.mode     = gl.LINES;
+    }
 
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x + trisUnit * 1.73 / 2,
-                y + trisUnit / 2
-            );
-        }
+    function initTri() {
+        triVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, triVertexBuff);
 
-        // Add square (with appropriate color and position) to graphics data
-        function addSquare(color, x, y) {
-            // Tri 1
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x - squaresUnit / 2,
-                y + squaresUnit / 2
-            );
+        var vertices = new Float32Array(
+            [ 0.000, 1.000, 0.000
+            ,-0.866,-0.500, 0.000
+            , 0.866,-0.500, 0.000 ]
+        );
+        vertices = vertices.map(function(val) { return val * 0.3; });
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x + squaresUnit / 2,
-                y + squaresUnit / 2
-            );
+        triVertexBuff.itemSize = 3; // Three values per vertex
+        triVertexBuff.numItems = 3; // Three vertices
+        triVertexBuff.mode     = gl.TRIANGLES;
+    }
 
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x - squaresUnit / 2,
-                y - squaresUnit / 2
-            );
+    function initSquare() {
+        squareVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexBuff);
 
-            // Tri 2
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x + squaresUnit / 2,
-                y + squaresUnit / 2
-            );
+        var vertices = new Float32Array(
+            [-0.707,-0.707, 0.000
+            , 0.707,-0.707, 0.000
+            , 0.707, 0.707, 0.000
+            ,-0.707, 0.707, 0.000 ]
+        );
+        vertices = vertices.map(function(val) { return val * 0.3; });
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x + squaresUnit / 2,
-                y - squaresUnit / 2
-            );
+        squareVertexBuff.itemSize = 3; // Three values per vertex
+        squareVertexBuff.numItems = 4; // Three vertices
+        squareVertexBuff.mode     = gl.TRIANGLE_FAN;
+    }
 
-            pushColor(trisColors, color);
-            pushMouseCoords(
-                trisVertices,
-                x - squaresUnit / 2,
-                y - squaresUnit / 2
+    function initCircle() {
+        circleVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexBuff);
+
+        var n = MAX_LENGTH - 2;
+        var vertices = [0.0, 0.0, 0.0];
+        for (var i = 0; i <= n; ++i) {
+            vertices.push(
+                Math.cos(2*i*Math.PI / n),
+                Math.sin(2*i*Math.PI / n),
+                0.0 
             );
         }
+        vertices = vertices.map(function(val) { return val * 0.3; });
+        vertices = new Float32Array(vertices);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        // Add circle (with appropriate color and position) to graphics data
-        function addCircle(color, x, y) {
-            var n = 32;
-            for (var i = 0; i < n; i += 1) {
-                pushColor(trisColors, color);
-                pushMouseCoords(
-                    trisVertices,
-                    x + circlesUnit * Math.cos(2*i*Math.PI / n),
-                    y - circlesUnit * Math.sin(2*i*Math.PI / n)
-                );
+        circleVertexBuff.itemSize = 3;          // Three values per vertex
+        circleVertexBuff.numItems = MAX_LENGTH; // MAX_LENGTH vertices
+        circleVertexBuff.mode     = gl.TRIANGLE_FAN;
+    }
 
-                pushColor(trisColors, color);
-                pushMouseCoords(
-                    trisVertices,
-                    x + circlesUnit * Math.cos(2*(i+1)*Math.PI / n),
-                    y - circlesUnit * Math.sin(2*(i+1)*Math.PI / n)
-                );
+    function initColors() {
+        var rVals = new Array(4 * MAX_LENGTH);
+        var gVals = new Array(4 * MAX_LENGTH);
+        var bVals = new Array(4 * MAX_LENGTH);
+        for (var i = 0; i < MAX_LENGTH; ++i) {
+            rVals[4*i + 0] = 1.0;
+            rVals[4*i + 1] = 0.0;
+            rVals[4*i + 2] = 0.0;
+            rVals[4*i + 3] = 1.0;
 
-                pushColor(trisColors, color);
-                pushMouseCoords(
-                    trisVertices,
-                    x,
-                    y
-                );
-            }
+            gVals[4*i + 0] = 0.0;
+            gVals[4*i + 1] = 1.0;
+            gVals[4*i + 2] = 0.0;
+            gVals[4*i + 3] = 1.0;
+
+            bVals[4*i + 0] = 0.0;
+            bVals[4*i + 1] = 0.0;
+            bVals[4*i + 2] = 1.0;
+            bVals[4*i + 3] = 1.0;
         }
+        rVals = new Float32Array(rVals);
+        gVals = new Float32Array(gVals);
+        bVals = new Float32Array(bVals);
 
-        // Adds shape (with appropriate color and position) to graphics data
-        function addShape(shape, color, x, y) {
-            switch (shape) {
-                case "p":
-                    addPoint(color, x, y);
-                    break;
-                case "h":
-                    addHLine(color, x, y);
-                    break;
-                case "v":
-                    addVLine(color, x, y);
-                    break;
-                case "t":
-                    addTri(color, x, y);
-                    break;
-                case "q":
-                    addSquare(color, x, y);
-                    break;
-                case "o":
-                    addCircle(color, x, y);
-                    break;
-            }
+        rBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, rBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, rVals, gl.STATIC_DRAW);
+        rBuff.itemSize = 4;
+
+        gBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, gBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, rVals, gl.STATIC_DRAW);
+        gBuff.itemSize = 4;
+
+        bBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, bBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, rVals, gl.STATIC_DRAW);
+        bBuff.itemSize = 4;
+    }
+
+    // *** OTHER METHODS ***
+    // x, y passed in Canvas coordinates
+    function addShape(type, x, y, color) {
+        // Convert x, y from canvas / pixel coordinates
+        // to NDC coordinates
+        var width  = gl.viewportWidth;
+        var height = gl.viewportHeight;
+        var xNDC = -1 + 2*(x / width );
+        var yNDC =  1 - 2*(y / height);
+
+        // Switch on type and update shapes
+        if (type != "v") {
+            shapes.push(new Shape(type, [xNDC, yNDC, 0], 1.0, 0.00, color));
+        } else {
+            shapes.push(new Shape("h",  [xNDC, yNDC, 0], 1.0, 1.57, color));
         }
+    }
 
-        // Use points/lines/triangles color and position
-        // data to fill buffers
-        function createBuffers() {
-            // Points buffers
-            pointsVertexPositionBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexPositionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pointsVertices), gl.STATIC_DRAW);
-            pointsVertexPositionBuffer.itemSize = 3;
-            pointsVertexPositionBuffer.numItems = pointsVertices.length / 3;
-
-            pointsVertexColorBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pointsColors), gl.STATIC_DRAW);
-            pointsVertexColorBuffer.itemSize = 4;
-            pointsVertexColorBuffer.numItems = pointsColors.length / 4;
-
-
-            // Lines buffers
-            linesVertexPositionBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexPositionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(linesVertices), gl.STATIC_DRAW);
-            linesVertexPositionBuffer.itemSize = 3;
-            linesVertexPositionBuffer.numItems = linesVertices.length / 3;
-
-            linesVertexColorBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(linesColors), gl.STATIC_DRAW);
-            linesVertexColorBuffer.itemSize = 4;
-            linesVertexColorBuffer.numItems = linesColors.length / 4;
-
-
-            // Tris buffers
-            trisVertexPositionBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexPositionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(trisVertices), gl.STATIC_DRAW);
-            trisVertexPositionBuffer.itemSize = 3;
-            trisVertexPositionBuffer.numItems = trisVertices.length / 3;
-
-            trisVertexColorBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(trisColors), gl.STATIC_DRAW);
-            trisVertexColorBuffer.itemSize = 4;
-            trisVertexColorBuffer.numItems = trisColors.length / 4;
+    function drawShape(shape) {
+        // Bind vertices
+        var vertexBuff;
+        switch (shape.type) {
+            case "p": vertexBuff = pointVertexBuff;  break;
+            case "h": vertexBuff = lineVertexBuff;   break;
+            case "t": vertexBuff = triVertexBuff;    break;
+            case "q": vertexBuff = squareVertexBuff; break;
+            case "o": vertexBuff = circleVertexBuff; break;
         }
-            
-        // Uses current information to draw scene
-        function drawScene() {
-            var width  = gl.viewportWidth;
-            var height = gl.viewportHeight;
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
+        gl.vertexAttribPointer(
+            shaderProgram.vertexPositionAttribute,
+            vertexBuff.itemSize,
+            gl.FLOAT,
+            false,
+            0,
+            0
+        );
 
-            // Clear
-            gl.viewport(0, 0, width, height);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-            // Draw Points
-            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexPositionBuffer);
-            gl.vertexAttribPointer(
-                shaderProgram.vertexPositionAttribute,
-                pointsVertexPositionBuffer.itemSize,
-                gl.FLOAT,
-                false,
-                0,
-                0
-            );
-            gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexColorBuffer);
-            gl.vertexAttribPointer(
-                shaderProgram.vertexColorAttribute,
-                pointsVertexColorBuffer.itemSize,
-                gl.FLOAT,
-                false,
-                0,
-                0
-            );
-            gl.drawArrays(gl.POINTS, 0, pointsVertexPositionBuffer.numItems);
-
-            // Draw Lines
-            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexPositionBuffer);
-            gl.vertexAttribPointer(
-                shaderProgram.vertexPositionAttribute,
-                linesVertexPositionBuffer.itemSize,
-                gl.FLOAT,
-                false,
-                0,
-                0
-            );
-            gl.bindBuffer(gl.ARRAY_BUFFER, linesVertexColorBuffer);
-            gl.vertexAttribPointer(
-                shaderProgram.vertexColorAttribute,
-                linesVertexColorBuffer.itemSize,
-                gl.FLOAT,
-                false,
-                0,
-                0
-            );
-            gl.drawArrays(gl.LINES, 0, linesVertexPositionBuffer.numItems);
-
-            // Draw Tris
-            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexPositionBuffer);
-            gl.vertexAttribPointer(
-                shaderProgram.vertexPositionAttribute,
-                trisVertexPositionBuffer.itemSize,
-                gl.FLOAT,
-                false,
-                0,
-                0
-            );
-            gl.bindBuffer(gl.ARRAY_BUFFER, trisVertexColorBuffer);
-            gl.vertexAttribPointer(
-                shaderProgram.vertexColorAttribute,
-                trisVertexColorBuffer.itemSize,
-                gl.FLOAT,
-                false,
-                0,
-                0
-            );
-            gl.drawArrays(gl.TRIANGLES, 0, trisVertexPositionBuffer.numItems);
+        // Bind colors
+        var colorBuff;
+        switch (shape.color) {
+            case "r": colorBuff = rBuff; break;
+            case "g": colorBuff = gBuff; break;
+            case "b": colorBuff = bBuff; break;
         }
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
+        gl.vertexAttribPointer(
+            shaderProgram.vertexColorAttribute,
+            colorBuff.itemSize,
+            gl.FLOAT,
+            false,
+            0,
+            0
+        );
 
-        // Initialize WebGL context and set up shaders
-        function init() {
-            // Set up context
-            var canvas = document.getElementById("canvas");
-            gl = canvas.getContext("experimental-webgl");
-            gl.viewportWidth  = canvas.width;
-            gl.viewportHeight = canvas.height;
+        // TODO transformation
+        // TODO bind transformation
 
-            // Set up shaders
-            shaderProgram = setup_shaders.initShaders(gl);
+        // Draw
+        gl.drawArrays(vertexBuff.mode, 0, vertexBuff.numItems);
+    }
 
-            shaderProgram.vertexPositionAttribute =
-                gl.getAttribLocation(shaderProgram, "position");
-            gl.enableVertexAttribArray(
-                shaderProgram.vertexPositionAttribute
-            );
+    // Uses current information to draw scene
+    function drawScene() {
+        // Clear screen
+        var width  = gl.viewportWidth;
+        var height = gl.viewportHeight;
+        gl.viewport(0, 0, width, height);
+        gl.clearColor(
+            clrColor[0],
+            clrColor[1],
+            clrColor[2],
+            clrColor[3]
+        );
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            shaderProgram.vertexColorAttribute =
-                gl.getAttribLocation(shaderProgram, "color");
-            gl.enableVertexAttribArray(
-                shaderProgram.vertexColorAttribute
-            );
+        // Draw shapes
+        shapes.forEach(drawShape);
+    }
 
-            // Initial draw
-            draw();
-        }
+    // Clear all graphics data
+    function clear() {
+        shapes = [];
+    }
 
-        // Redraws the scene
-        function draw() {
-            gl.clearColor(
-                clrColor[0],
-                clrColor[1],
-                clrColor[2],
-                clrColor[3]
-            );
-            createBuffers();
-            drawScene();
-        }
-
-        // Clear all graphics data
-        function clear() {
-            pointsVertices = [];
-            pointsColors = [];
-
-            linesVertices = [];
-            linesColors = [];
-
-            trisVertices = [];
-            trisColors = [];
-        }
-
-        function setBackground(r, g, b, alpha) {
-            clrColor = [r, g, b, alpha];
-            draw();
-        }
+    // Choose different background color
+    function setBackground(r, g, b, alpha) {
+        clrColor = [r, g, b, alpha];
+    }
 
     return {
-        // *** PUBLIC ***
+        init: init,
 
         addShape: addShape,
 
-        init: init,
-
-        draw: draw,
+        drawScene: drawScene,
 
         clear: clear,
 
