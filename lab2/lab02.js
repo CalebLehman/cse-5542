@@ -163,7 +163,7 @@ var userHandler = (function() {
                     && (currShape != null)
                     && (currColor != null)
                 ) {
-                    var hit = selectCurrentShape(mouseX, mouseY);
+                    var hit = graphics.selectCurrentShape(mouseX, mouseY);
                     if (!hit) {
                         graphics.addShape(
                             currShape,
@@ -542,15 +542,16 @@ var graphics = (function() {
                 yNDC,
                 globalTransform
             );
-            alert(localCoords);
+            var xLocal = localCoords.x;
+            var yLocal = localCoords.y;
 
             var hit = false;
             switch (shape.type) {
-                case "p": hit = collidePoint(shape, xNDC, yNDC);  break;
-                case "h": hit = collideLine(shape, xNDC, yNDC);   break;
-                case "t": hit = collideTri(shape, xNDC, yNDC);    break;
-                case "q": hit = collideSquare(shape, xNDC, yNDC); break;
-                case "o": hit = collideCircle(shape, xNDC, yNDC); break;
+                case "p": hit = collidePoint(shape, xLocal, yLocal);  break;
+                case "h": hit = collideLine(shape, xLocal, yLocal);   break;
+                case "t": hit = collideTri(shape, xLocal, yLocal);    break;
+                case "q": hit = collideSquare(shape, xLocal, yLocal); break;
+                case "o": hit = collideCircle(shape, xLocal, yLocal); break;
             }
             if (hit) {
                 currentIndex = i;
@@ -576,8 +577,7 @@ var graphics = (function() {
     }
 
     function collideSquare(shape, x, y) {
-        // TODO
-        return false;
+        return (x*x + y*y) < vertexBuffScale * vertexBuffScale;
     }
 
     function collideCircle(shape, x, y) {
