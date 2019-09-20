@@ -15,21 +15,10 @@ var userHandler = (function() {
                 false
             );
             document.addEventListener(
-                "mousemove",
-                updateMouse,
-                false
-            );
-            document.addEventListener(
                 "mousedown",
                 userMouseDown,
                 false
             );
-        }
-
-        // Reset all user data and associated graphics
-        function clearUserData() {
-            // Tell graphics object to clear itself
-            graphics.clear();
         }
 
         // Process user key inputs
@@ -79,6 +68,17 @@ var userHandler = (function() {
                     currColor = "g";
                     break;
 
+                // Command keys
+                // TODO
+                case 83: // "s"
+                    if (event.shiftKey) {
+                        graphics.scaleUpCurr();
+                    } else {
+                        graphics.scaleDownCurr();
+                    }
+                    graphics.drawScene();
+                    break;
+
                 // Misc. keys
                 case 68: // "d"
                     graphics.drawScene();
@@ -95,8 +95,34 @@ var userHandler = (function() {
                 colorString;
         }
 
+        // Update stored mouse coordinates to match NDC
+        // coordinates of an event
+        function updateMouse(event) {
+            var canvas = document.getElementById("canvas")
+            var canvasRect = canvas.getBoundingClientRect();
+            mouseX = event.clientX - canvasRect.left;
+            mouseY = event.clientY - canvasRect.top;
+
+            if ((0 > mouseX) || (mouseX >= canvas.width)) {
+                mouseX = null;
+            }
+            if ((0 > mouseY) || (mouseY >= canvas.height)) {
+                mouseY = null;
+            }
+        }
+
         // Process a user mouse down input
         function userMouseDown(event) {
+            document.addEventListener(
+                "mouseup",
+                userMouseUp,
+                false
+            );
+            document.addEventListener(
+                "mousemove",
+                userMouseDrag,
+                false
+            );
             updateMouse(event);
             if ((mouseX != null) && (mouseY != null)) {
                 graphics.addShape(
@@ -109,24 +135,33 @@ var userHandler = (function() {
             }
         }
 
-        // Update stored mouse coordinates to match NDC
-        // coordinates of an event
-        function updateMouse(event) {
-            var canvas = document.getElementById("canvas")
-            var canvasRect = canvas.getBoundingClientRect();
-            mouseX = event.clientX - canvasRect.left;
-            mouseY = event.clientY - canvasRect.top;
-
-            mouseX_NDC = -1 + 2 * mouseX / canvas.width;
-            mouseY_NDC = 1 - 2 * mouseY / canvas.height;
-
-            if (((-1 <= mouseX_NDC) && (mouseX_NDC <= 1)) && ((-1 <= mouseY_NDC) && (mouseY_NDC <= 1))) {
-                document.getElementById("mousePos").innerHTML = "(" + mouseX_NDC.toFixed(3) + ", " + mouseY_NDC.toFixed(3) + ")";
-            } else {
-                document.getElementById("mousePos").innerHTML = "Out of canvas";
-                mouseX = null;
-                mouseY = null;
+        function userMouseDrag(event) {
+            if (mouseX != null) {
+                var canvas = document.getElementById("canvas");
+                deltaX = event.clientX - mouseX;
+                graphics.rotateCurr(2 * Math.PI * deltaX / canvas.width);
+                graphics.drawScene();
             }
+            mouseX = event.clientX;
+        }
+
+        function userMouseUp(event) {
+            document.removeEventListener(
+                "mouseup",
+                userMouseUp,
+                false
+            );
+            document.removeEventListener(
+                "mousemove",
+                userMouseDrag,
+                false
+            );
+        }
+
+        // Reset all user data and associated graphics
+        function clearUserData() {
+            // Tell graphics object to clear itself
+            graphics.clear();
         }
 
     return {
@@ -152,9 +187,15 @@ var graphics = (function() {
     var shaderProgram;
 
     // Current list of shapes to draw
-    var shapes = []; // Shape type, translation, rotation, color
+    var shapes = [];
+
+    var globalRot   = 0.0;
+    var globalScale = [1, 1, 1];
+    const scaleFactor = 1.5;
+
 
     // Buffers for each shape type
+    const vertexBuffScale = 0.2;
     var pointVertexBuff;
     var lineVertexBuff;
     var triVertexBuff;
@@ -179,16 +220,20 @@ var graphics = (function() {
 
         // Set up shaders
         shaderProgram = setup_shaders.initShaders(gl);
+        // Vertex position attribute
         shaderProgram.vertexPositionAttribute =
             gl.getAttribLocation(shaderProgram, "position");
         gl.enableVertexAttribArray(
             shaderProgram.vertexPositionAttribute
         );
+        // Vertex color attribute
         shaderProgram.vertexColorAttribute =
             gl.getAttribLocation(shaderProgram, "color");
         gl.enableVertexAttribArray(
             shaderProgram.vertexColorAttribute
         );
+        shaderProgram.transformMatrix =
+            gl.getUniformLocation(shaderProgram, "transform");
 
         // Initialize shape buffers
         initPoint();
@@ -209,7 +254,7 @@ var graphics = (function() {
         gl.bindBuffer(gl.ARRAY_BUFFER, pointVertexBuff);
 
         var vertices = new Float32Array([0.0, 0.0, 0.0]);
-        vertices = vertices.map(function(val) { return val * 0.3; });
+        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
         pointVertexBuff.itemSize = 3; // Three values per vertex
@@ -225,7 +270,7 @@ var graphics = (function() {
             [ 1.0, 0.0, 0.0
             ,-1.0, 0.0, 0.0 ]
         );
-        vertices = vertices.map(function(val) { return val * 0.3; });
+        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
         lineVertexBuff.itemSize = 3; // Three values per vertex
@@ -242,7 +287,7 @@ var graphics = (function() {
             ,-0.866,-0.500, 0.000
             , 0.866,-0.500, 0.000 ]
         );
-        vertices = vertices.map(function(val) { return val * 0.3; });
+        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
         triVertexBuff.itemSize = 3; // Three values per vertex
@@ -260,7 +305,7 @@ var graphics = (function() {
             , 0.707, 0.707, 0.000
             ,-0.707, 0.707, 0.000 ]
         );
-        vertices = vertices.map(function(val) { return val * 0.3; });
+        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
         squareVertexBuff.itemSize = 3; // Three values per vertex
@@ -281,7 +326,7 @@ var graphics = (function() {
                 0.0 
             );
         }
-        vertices = vertices.map(function(val) { return val * 0.3; });
+        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
         vertices = new Float32Array(vertices);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
@@ -321,12 +366,12 @@ var graphics = (function() {
 
         gBuff = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, gBuff);
-        gl.bufferData(gl.ARRAY_BUFFER, rVals, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, gVals, gl.STATIC_DRAW);
         gBuff.itemSize = 4;
 
         bBuff = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, bBuff);
-        gl.bufferData(gl.ARRAY_BUFFER, rVals, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, bVals, gl.STATIC_DRAW);
         bBuff.itemSize = 4;
     }
 
@@ -342,13 +387,50 @@ var graphics = (function() {
 
         // Switch on type and update shapes
         if (type != "v") {
-            shapes.push(new Shape(type, [xNDC, yNDC, 0], 1.0, 0.00, color));
+            shapes.push(
+                new Shape(
+                    type,            // Type of shape
+                    [xNDC, yNDC, 0], // Translation
+                    0.00,            // Rotation
+                    [1, 1, 1],       // Scale
+                    color            // Color
+                )
+            );
         } else {
-            shapes.push(new Shape("h",  [xNDC, yNDC, 0], 1.0, 1.57, color));
+            shapes.push(
+                new Shape(
+                    "h",             // Type of shape
+                                     //   "h" denotes line,
+                                     //   rotation makes vertical
+                    [xNDC, yNDC, 0], // Translation
+                    Math.PI / 2,     // Rotation
+                    [1, 1, 1],       // Scale
+                    color            // Color
+                )
+            );
         }
     }
 
-    function drawShape(shape) {
+    function scaleUpCurr() {
+        var currentShape = shapes[shapes.length - 1];
+        currentShape.scale[0] *= scaleFactor;
+        currentShape.scale[1] *= scaleFactor;
+        currentShape.scale[2] *= scaleFactor;
+    }
+
+    function scaleDownCurr() {
+        var currentShape = shapes[shapes.length - 1];
+        currentShape.scale[0] /= scaleFactor;
+        currentShape.scale[1] /= scaleFactor;
+        currentShape.scale[2] /= scaleFactor;
+    }
+
+    function rotateCurr(rot) {
+        var currentShape = shapes[shapes.length - 1];
+        currentShape.rot += rot;
+    }
+
+    function drawShape(shape, globalTransform) {
         // Bind vertices
         var vertexBuff;
         switch (shape.type) {
@@ -385,8 +467,16 @@ var graphics = (function() {
             0
         );
 
-        // TODO transformation
-        // TODO bind transformation
+        // Bind transformation
+        var transform = mat4.clone(globalTransform);
+        mat4.translate(transform, transform, shape.trans         );
+        mat4.rotate(   transform, transform, shape.rot, [0, 0, 1]); // Local rotation
+        mat4.scale(    transform, transform, shape.scale);          // Local scaling
+        gl.uniformMatrix4fv(
+            shaderProgram.transformMatrix,
+            false,
+            transform
+        );
 
         // Draw
         gl.drawArrays(vertexBuff.mode, 0, vertexBuff.numItems);
@@ -407,7 +497,10 @@ var graphics = (function() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Draw shapes
-        shapes.forEach(drawShape);
+        var globalTransform = mat4.create();
+        mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
+        mat4.scale( globalTransform, globalTransform, globalScale);
+        shapes.forEach(function (shape) { drawShape(shape, globalTransform); });
     }
 
     // Clear all graphics data
@@ -424,6 +517,10 @@ var graphics = (function() {
         init: init,
 
         addShape: addShape,
+
+        scaleUpCurr: scaleUpCurr,
+        scaleDownCurr: scaleDownCurr,
+        rotateCurr: rotateCurr,
 
         drawScene: drawScene,
 

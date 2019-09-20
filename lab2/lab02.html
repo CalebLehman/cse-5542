@@ -22,16 +22,20 @@
         attribute vec3 position;
         attribute vec4 color;
         varying vec4 vColor;
+        uniform mat4 transform;
         
         void main(void) {
-            gl_Position = vec4(position, 1.0);
-            vColor = color;
             gl_PointSize = 2.0;
+
+            gl_Position = transform * vec4(position, 1.0);
+            vColor = color;
         }
     </script>
     
+    <!-- scripts -->
     <script type="text/javascript" src="setup_shaders.js"></script>
     <script type="text/javascript" src="lab02.js"></script>
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
 </head>
 
 <body onload="graphics.init(); userHandler.init();">
@@ -65,9 +69,6 @@
         <li>g = green</li>
         <li>b = blue</li>
     </ul>
-
-    <h4>Current Mouse position in canvas (normalized coordinates):</h4>
-    <p id="mousePos">Ready</p>
     </div>
 
     <br style="clear:both" />
