@@ -561,18 +561,25 @@ var graphics = (function() {
     }
 
     function collidePoint(shape, x, y) {
-        // TODO
-        return false;
+        const tolerance = 0.1; 
+        return (x <  tolerance)
+            && (x > -tolerance)
+            && (y <  tolerance)
+            && (y > -tolerance);
     }
 
     function collideLine(shape, x, y) {
-        // TODO
-        return false;
+        const tolerance = 0.1; 
+        return (x <  vertexBuffScale)
+            && (x > -vertexBuffScale)
+            && (y <  tolerance)
+            && (y > -tolerance);
     }
 
     function collideTri(shape, x, y) {
-        // TODO
-        return false;
+        return (y > -0.5)
+            && (y <  1.732 * x + 1)
+            && (y < -1.732 * x + 1);
     }
 
     function collideSquare(shape, x, y) {
