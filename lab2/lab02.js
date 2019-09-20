@@ -6,6 +6,7 @@ var userHandler = (function() {
         var mouseY;
         var currColor = null;
         var currShape = null;
+        var globalToggle = false;
 
         // Initialization function for user handler
         function init() {
@@ -69,7 +70,6 @@ var userHandler = (function() {
                     break;
 
                 // Command keys
-                // TODO
                 case 83: // "s"
                     if (event.shiftKey) {
                         graphics.scaleUpCurr();
@@ -78,13 +78,29 @@ var userHandler = (function() {
                     }
                     graphics.drawScene();
                     break;
+                case 87: // "w"
+                    if (event.shiftKey) {
+                        globalToggle = true;
+                    } else {
+                        globalToggle = false;
+                        graphics.bakeGlobals();
+                    }
+                    break;
 
                 // Misc. keys
                 case 68: // "d"
                     graphics.drawScene();
                     break;
                 case 67: // "c"
-                    clearUserData();
+                    mouseX = null;
+                    mouseY = null;
+                    currColor = null;
+                    currShape = null;
+                    shapeString = "No shape selected";
+                    colorString = "No color selected";
+                    globalToggle = false;
+
+                    graphics.clear();
                     graphics.drawScene();
                     break;
             }
@@ -123,15 +139,24 @@ var userHandler = (function() {
                 userMouseDrag,
                 false
             );
+
+
             updateMouse(event);
-            if ((mouseX != null) && (mouseY != null)) {
-                graphics.addShape(
-                    currShape,
-                    mouseX,
-                    mouseY,
-                    currColor
-                );
-                graphics.drawScene();
+
+            if (!globalToggle) {
+                if (   (mouseX != null   )
+                    && (mouseY != null   )
+                    && (currShape != null)
+                    && (currColor != null)
+                ) {
+                    graphics.addShape(
+                        currShape,
+                        mouseX,
+                        mouseY,
+                        currColor
+                    );
+                    graphics.drawScene();
+                }
             }
         }
 
@@ -139,7 +164,15 @@ var userHandler = (function() {
             if (mouseX != null) {
                 var canvas = document.getElementById("canvas");
                 deltaX = event.clientX - mouseX;
-                graphics.rotateCurr(2 * Math.PI * deltaX / canvas.width);
+                if (globalToggle) {
+                    graphics.rotateGlobal(
+                        2 * Math.PI * deltaX / canvas.width
+                    );
+                } else {
+                    graphics.rotateCurr(
+                        2 * Math.PI * deltaX / canvas.width
+                    );
+                }
                 graphics.drawScene();
             }
             mouseX = event.clientX;
@@ -158,12 +191,6 @@ var userHandler = (function() {
             );
         }
 
-        // Reset all user data and associated graphics
-        function clearUserData() {
-            // Tell graphics object to clear itself
-            graphics.clear();
-        }
-
     return {
         // *** PUBLIC ***
         init: init
@@ -178,6 +205,7 @@ class Shape {
         this.rot   = rot;
         this.scale = scale;
         this.color = color;
+        this.mat   = mat4.create();
     }
 }
 
@@ -412,22 +440,46 @@ var graphics = (function() {
     }
 
     function scaleUpCurr() {
-        var currentShape = shapes[shapes.length - 1];
-        currentShape.scale[0] *= scaleFactor;
-        currentShape.scale[1] *= scaleFactor;
-        currentShape.scale[2] *= scaleFactor;
+        var currentIndex = shapes.length - 1;
+        if (currentIndex >= 0) {
+            var currentShape = shapes[currentIndex];
+            currentShape.scale[0] *= scaleFactor;
+            currentShape.scale[1] *= scaleFactor;
+            currentShape.scale[2] *= scaleFactor;
+        }
     }
 
     function scaleDownCurr() {
-        var currentShape = shapes[shapes.length - 1];
-        currentShape.scale[0] /= scaleFactor;
-        currentShape.scale[1] /= scaleFactor;
-        currentShape.scale[2] /= scaleFactor;
+        var currentIndex = shapes.length - 1;
+        if (currentIndex >= 0) {
+            var currentShape = shapes[currentIndex];
+            currentShape.scale[0] /= scaleFactor;
+            currentShape.scale[1] /= scaleFactor;
+            currentShape.scale[2] /= scaleFactor;
+        }
     }
 
     function rotateCurr(rot) {
-        var currentShape = shapes[shapes.length - 1];
-        currentShape.rot += rot;
+        var currentIndex = shapes.length - 1;
+        if (currentIndex >= 0) {
+            var currentShape = shapes[currentIndex];
+            currentShape.rot += rot;
+        }
+    }
+
+    function rotateGlobal(rot) {
+        globalRot += rot;
+    }
+
+    function bakeGlobals() {
+        var globalTransform = mat4.create();
+        mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
+        mat4.scale( globalTransform, globalTransform, globalScale);
+        shapes.forEach(function (shape) {
+            mat4.multiply(shape.mat, globalTransform, shape.mat);
+        });
+        globalRot   = 0.0;
+        globalScale = [1, 1, 1];
     }
 
     function drawShape(shape, globalTransform) {
@@ -469,9 +521,10 @@ var graphics = (function() {
 
         // Bind transformation
         var transform = mat4.clone(globalTransform);
-        mat4.translate(transform, transform, shape.trans         );
-        mat4.rotate(   transform, transform, shape.rot, [0, 0, 1]); // Local rotation
-        mat4.scale(    transform, transform, shape.scale);          // Local scaling
+        mat4.multiply (transform, transform, shape.mat);
+        mat4.translate(transform, transform, shape.trans);
+        mat4.rotate   (transform, transform, shape.rot, [0, 0, 1]);
+        mat4.scale    (transform, transform, shape.scale);
         gl.uniformMatrix4fv(
             shaderProgram.transformMatrix,
             false,
@@ -505,7 +558,9 @@ var graphics = (function() {
 
     // Clear all graphics data
     function clear() {
-        shapes = [];
+        shapes      = [];
+        globalRot   = 0.0;
+        globalScale = [1, 1, 1];
     }
 
     // Choose different background color
@@ -521,6 +576,8 @@ var graphics = (function() {
         scaleUpCurr: scaleUpCurr,
         scaleDownCurr: scaleDownCurr,
         rotateCurr: rotateCurr,
+        rotateGlobal: rotateGlobal,
+        bakeGlobals: bakeGlobals,
 
         drawScene: drawScene,
 
