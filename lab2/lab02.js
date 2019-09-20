@@ -171,6 +171,7 @@ var userHandler = (function() {
                             mouseY,
                             currColor
                         );
+                    }
                     graphics.drawScene();
                 }
             }
