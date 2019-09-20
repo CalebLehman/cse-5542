@@ -576,8 +576,10 @@ var graphics = (function() {
     }
 
     function collideSquare(shape, x, y) {
-        // TODO
-        return false;
+        return (x <  0.707 * vertexBuffScale)
+            && (x > -0.707 * vertexBuffScale)
+            && (y <  0.707 * vertexBuffScale)
+            && (y > -0.707 * vertexBuffScale);
     }
 
     function collideCircle(shape, x, y) {
