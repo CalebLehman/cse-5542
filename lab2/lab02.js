@@ -158,18 +158,23 @@ var userHandler = (function() {
             updateMouse(event);
 
             if (!globalToggle) {
-                if (   (mouseX != null   )
-                    && (mouseY != null   )
+                if (   (mouseX    != null)
+                    && (mouseY    != null)
                     && (currShape != null)
                     && (currColor != null)
                 ) {
-                    graphics.addShape(
-                        currShape,
-                        mouseX,
-                        mouseY,
-                        currColor
-                    );
-                    graphics.drawScene();
+                    var hit = selectCurrentShape(mouseX, mouseY);
+                    if (!hit) {
+                        graphics.addShape(
+                            currShape,
+                            mouseX,
+                            mouseY,
+                            currColor
+                        );
+                        graphics.drawScene();
+                    } else {
+                        // TODO
+                    }
                 }
             }
         }
@@ -475,6 +480,47 @@ var graphics = (function() {
         currentIndex = null;
     }
 
+    function NDCToLocal(shape, x, y, globalTransform) {
+        var transform = mat4.create();
+        mat4.scale(
+            transform,
+            transform,
+            shape.scale.map(function (x) {
+                return 1.0 / x;
+            })
+        );
+        mat4.rotate(
+            transform,
+            transform,
+            -1.0 * shape.rot,
+            [0, 0, 1]
+        );
+        mat4.translate(
+            transform,
+            transform,
+            shape.trans.map(function (x) {
+                return -1.0 * x;
+            })
+        );
+        var inverseMat = mat4.clone(globalTransform);
+        mat4.multiply(
+            inverseMat,
+            inverseMat,
+            shape.mat
+        );
+        mat4.invert(inverseMat, inverseMat);
+        mat4.multiply(
+            transform,
+            transform,
+            inverseMat
+        );
+
+        var vec = vec4.fromValues(x, y, 0, 1);
+        vec4.transformMat4(vec, vec, transform);
+
+        return { x: vec[0], y: vec[1] };
+    }
+
     function selectCurrentShape(x, y) {
         // Convert x, y from canvas / pixel coordinates
         // to NDC coordinates
@@ -483,8 +529,21 @@ var graphics = (function() {
         var xNDC = -1 + 2*(x / width );
         var yNDC =  1 - 2*(y / height);
 
+        var globalTransform = mat4.create();
+        mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
+        mat4.scale( globalTransform, globalTransform, globalScale);
         for (var i = 0; i < shapes.length; ++i) {
+
             var shape = shapes[i];
+
+            var localCoords = NDCToLocal(
+                shape,
+                xNDC,
+                yNDC,
+                globalTransform
+            );
+            alert(localCoords);
+
             var hit = false;
             switch (shape.type) {
                 case "p": hit = collidePoint(shape, xNDC, yNDC);  break;
