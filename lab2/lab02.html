@@ -45,33 +45,35 @@
 
     <div style="float:left">
     <h4>Background Color:</h4>
-    <button type="button" onclick="graphics.setBackground(1, 1, 1, 1)">White</button>
-    <button type="button" onclick="graphics.setBackground(0, 0, 0, 1)">Black</button>
-    <button type="button" onclick="graphics.setBackground(1, 0, 0, 1)">Red</button>
-    <button type="button" onclick="graphics.setBackground(0, 1, 0, 1)">Green</button>
-    <button type="button" onclick="graphics.setBackground(0, 0, 1, 1)">Blue</button>
+    <button type="button" onclick="graphics.setBackground(1, 1, 1, 1); graphics.drawScene();">White</button>
+    <button type="button" onclick="graphics.setBackground(0, 0, 0, 1); graphics.drawScene();">Black</button>
+    <button type="button" onclick="graphics.setBackground(1, 0, 0, 1); graphics.drawScene();">Red</button>
+    <button type="button" onclick="graphics.setBackground(0, 1, 0, 1); graphics.drawScene();">Green</button>
+    <button type="button" onclick="graphics.setBackground(0, 0, 1, 1); graphics.drawScene();">Blue</button>
 
-    <h4>Current Shape:</h4>
-    <p id="currShapeText">No shape selected</p>
-    <ul>
-        <li>p = point</li>
-        <li>h = horizontal line</li>
-        <li>v = vertical line</li>
-        <li>t = triangle</li>
-        <li>q = square</li>
-        <li>o = circle</li>
-    </ul>
+    <h4>Next Shape: (p, h, v, t, q, o)</h4>
+    <p id="nextShapeText">No shape selected</p>
 
-    <h4>Current Color:</h4>
-    <p id="currColorText">No color selected</p>
+    <h4>Next Color: (r, g, b)</h4>
+    <p id="nextColorText">No color selected</p>
+
+    <h4>World Toggle: (W, w)</h4>
+    <p id="globalToggleText">Off</p>
+
+    <h4>Useful Reminders:</h4>
     <ul>
-        <li>r = red</li>
-        <li>g = green</li>
-        <li>b = blue</li>
+        <li>c   - Clears screen and resets</li>
+        <li>S/s - Scales up/down</li>
+        <li>Esc - Deselects selection</li>
+        <li>Drag mouse left/right rotates</li>
+        <li>Scaling and rotation can be toggled to world with W/w keys</li>
+        <li>Current selected object is displayed in purple</li>
     </ul>
     </div>
 
     <br style="clear:both" />
+    <h2>Usage:</h2>
+    <p>Usage is documented in <a href="README.md">README</a></p>
 
 </body>
 

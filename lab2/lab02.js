@@ -25,9 +25,9 @@ var userHandler = (function() {
         // Process user key inputs
         function userKeyDown(event) {
             var shapeString =
-                document.getElementById("currShapeText").innerHTML;
+                document.getElementById("nextShapeText").innerHTML;
             var colorString =
-                document.getElementById("currColorText").innerHTML;
+                document.getElementById("nextColorText").innerHTML;
             switch (event.keyCode) {
                 // Shape keys
                 case 80: // "p"
@@ -71,20 +71,34 @@ var userHandler = (function() {
 
                 // Command keys
                 case 83: // "s"
-                    if (event.shiftKey) {
-                        graphics.scaleUpCurr();
+                    if (globalToggle) {
+                        if (event.shiftKey) {
+                            graphics.scaleUpGlobal();
+                        } else {
+                            graphics.scaleDownGlobal();
+                        }
                     } else {
-                        graphics.scaleDownCurr();
+                        if (event.shiftKey) {
+                            graphics.scaleUpCurr();
+                        } else {
+                            graphics.scaleDownCurr();
+                        }
                     }
                     graphics.drawScene();
                     break;
                 case 87: // "w"
                     if (event.shiftKey) {
                         globalToggle = true;
+                        document.getElementById("globalToggleText").innerHTML = "On";
                     } else {
                         globalToggle = false;
+                        document.getElementById("globalToggleText").innerHTML = "Off";
                         graphics.bakeGlobals();
                     }
+                    break;
+                case 27: // "Esc"
+                    graphics.unselectCurrentShape();
+                    graphics.drawScene();
                     break;
 
                 // Misc. keys
@@ -105,9 +119,9 @@ var userHandler = (function() {
                     break;
             }
 
-            document.getElementById("currShapeText").innerHTML =
+            document.getElementById("nextShapeText").innerHTML =
                 shapeString;
-            document.getElementById("currColorText").innerHTML =
+            document.getElementById("nextColorText").innerHTML =
                 colorString;
         }
 
@@ -215,11 +229,13 @@ var graphics = (function() {
     var shaderProgram;
 
     // Current list of shapes to draw
-    var shapes = [];
+    var shapes;
+    var currentIndex;
+    var globalRot;
+    var globalScale;
+    var clrColor;
 
-    var globalRot   = 0.0;
-    var globalScale = [1, 1, 1];
-    const scaleFactor = 1.5;
+    const scaleFactor = 1.5; // Factor scaling operations use
 
 
     // Buffers for each shape type
@@ -235,11 +251,13 @@ var graphics = (function() {
     var rBuff;
     var gBuff;
     var bBuff;
-    var clrColor = [1.0, 1.0, 1.0, 1.0];
+    var pBuff;
 
     // *** INITIALIZATION ***
     // Initialize WebGL context and set up shaders
     function init() {
+        clear();
+
         // Set up context
         var canvas = document.getElementById("canvas");
         gl = canvas.getContext("experimental-webgl");
@@ -367,6 +385,7 @@ var graphics = (function() {
         var rVals = new Array(4 * MAX_LENGTH);
         var gVals = new Array(4 * MAX_LENGTH);
         var bVals = new Array(4 * MAX_LENGTH);
+        var pVals = new Array(4 * MAX_LENGTH);
         for (var i = 0; i < MAX_LENGTH; ++i) {
             rVals[4*i + 0] = 1.0;
             rVals[4*i + 1] = 0.0;
@@ -382,10 +401,16 @@ var graphics = (function() {
             bVals[4*i + 1] = 0.0;
             bVals[4*i + 2] = 1.0;
             bVals[4*i + 3] = 1.0;
+
+            pVals[4*i + 0] = 1.0;
+            pVals[4*i + 1] = 0.0;
+            pVals[4*i + 2] = 1.0;
+            pVals[4*i + 3] = 1.0;
         }
         rVals = new Float32Array(rVals);
         gVals = new Float32Array(gVals);
         bVals = new Float32Array(bVals);
+        pVals = new Float32Array(pVals);
 
         rBuff = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, rBuff);
@@ -401,9 +426,14 @@ var graphics = (function() {
         gl.bindBuffer(gl.ARRAY_BUFFER, bBuff);
         gl.bufferData(gl.ARRAY_BUFFER, bVals, gl.STATIC_DRAW);
         bBuff.itemSize = 4;
+
+        pBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, pBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, pVals, gl.STATIC_DRAW);
+        pBuff.itemSize = 4;
     }
 
-    // *** OTHER METHODS ***
+    // TODO name
     // x, y passed in Canvas coordinates
     function addShape(type, x, y, color) {
         // Convert x, y from canvas / pixel coordinates
@@ -437,11 +467,67 @@ var graphics = (function() {
                 )
             );
         }
+
+        currentIndex = shapes.length - 1;
+    }
+
+    function unselectCurrentShape() {
+        currentIndex = null;
+    }
+
+    function selectCurrentShape(x, y) {
+        // Convert x, y from canvas / pixel coordinates
+        // to NDC coordinates
+        var width  = gl.viewportWidth;
+        var height = gl.viewportHeight;
+        var xNDC = -1 + 2*(x / width );
+        var yNDC =  1 - 2*(y / height);
+
+        for (var i = 0; i < shapes.length; ++i) {
+            var shape = shapes[i];
+            var hit = false;
+            switch (shape.type) {
+                case "p": hit = collidePoint(shape, xNDC, yNDC);  break;
+                case "h": hit = collideLine(shape, xNDC, yNDC);   break;
+                case "t": hit = collideTri(shape, xNDC, yNDC);    break;
+                case "q": hit = collideSquare(shape, xNDC, yNDC); break;
+                case "o": hit = collideCircle(shape, xNDC, yNDC); break;
+            }
+            if (hit) {
+                currentIndex = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function collidePoint(shape, x, y) {
+        // TODO
+        return false;
+    }
+
+    function collideLine(shape, x, y) {
+        // TODO
+        return false;
+    }
+
+    function collideTri(shape, x, y) {
+        // TODO
+        return false;
+    }
+
+    function collideSquare(shape, x, y) {
+        // TODO
+        return false;
+    }
+
+    function collideCircle(shape, x, y) {
+        // TODO
+        return false;
     }
 
     function scaleUpCurr() {
-        var currentIndex = shapes.length - 1;
-        if (currentIndex >= 0) {
+        if (currentIndex != null) {
             var currentShape = shapes[currentIndex];
             currentShape.scale[0] *= scaleFactor;
             currentShape.scale[1] *= scaleFactor;
@@ -450,8 +536,7 @@ var graphics = (function() {
     }
 
     function scaleDownCurr() {
-        var currentIndex = shapes.length - 1;
-        if (currentIndex >= 0) {
+        if (currentIndex != null) {
             var currentShape = shapes[currentIndex];
             currentShape.scale[0] /= scaleFactor;
             currentShape.scale[1] /= scaleFactor;
@@ -459,9 +544,20 @@ var graphics = (function() {
         }
     }
 
+    function scaleUpGlobal() {
+        globalScale[0] *= scaleFactor;
+        globalScale[1] *= scaleFactor;
+        globalScale[2] *= scaleFactor;
+    }
+
+    function scaleDownGlobal() {
+        globalScale[0] /= scaleFactor;
+        globalScale[1] /= scaleFactor;
+        globalScale[2] /= scaleFactor;
+    }
+
     function rotateCurr(rot) {
-        var currentIndex = shapes.length - 1;
-        if (currentIndex >= 0) {
+        if (currentIndex != null) {
             var currentShape = shapes[currentIndex];
             currentShape.rot += rot;
         }
@@ -508,6 +604,7 @@ var graphics = (function() {
             case "r": colorBuff = rBuff; break;
             case "g": colorBuff = gBuff; break;
             case "b": colorBuff = bBuff; break;
+            case "p": colorBuff = pBuff; break;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
         gl.vertexAttribPointer(
@@ -554,6 +651,14 @@ var graphics = (function() {
         mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
         mat4.scale( globalTransform, globalTransform, globalScale);
         shapes.forEach(function (shape) { drawShape(shape, globalTransform); });
+        // Redraw current shape with purple color
+        if (currentIndex != null) {
+            var shape = shapes[currentIndex]
+            var color = shape.color;
+            shape.color = "p";
+            drawShape(shape, globalTransform);
+            shape.color = color;
+        }
     }
 
     // Clear all graphics data
@@ -561,6 +666,8 @@ var graphics = (function() {
         shapes      = [];
         globalRot   = 0.0;
         globalScale = [1, 1, 1];
+        currentIndex = null;
+        clrColor = [1, 1, 1, 1];
     }
 
     // Choose different background color
@@ -572,9 +679,13 @@ var graphics = (function() {
         init: init,
 
         addShape: addShape,
+        selectCurrentShape: selectCurrentShape,
+        unselectCurrentShape: unselectCurrentShape,
 
         scaleUpCurr: scaleUpCurr,
         scaleDownCurr: scaleDownCurr,
+        scaleUpGlobal: scaleUpGlobal,
+        scaleDownGlobal: scaleDownGlobal,
         rotateCurr: rotateCurr,
         rotateGlobal: rotateGlobal,
         bakeGlobals: bakeGlobals,
