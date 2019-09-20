@@ -171,18 +171,16 @@ var userHandler = (function() {
                             mouseY,
                             currColor
                         );
-                        graphics.drawScene();
-                    } else {
-                        // TODO
-                    }
+                    graphics.drawScene();
                 }
             }
         }
 
         function userMouseDrag(event) {
+            var canvas = document.getElementById("canvas");
+            var canvasRect = canvas.getBoundingClientRect();
             if (mouseX != null) {
-                var canvas = document.getElementById("canvas");
-                deltaX = event.clientX - mouseX;
+                deltaX = (event.clientX - canvasRect.left) - mouseX;
                 if (globalToggle) {
                     graphics.rotateGlobal(
                         2 * Math.PI * deltaX / canvas.width
@@ -194,7 +192,7 @@ var userHandler = (function() {
                 }
                 graphics.drawScene();
             }
-            mouseX = event.clientX;
+            mouseX = event.clientX - canvasRect.left;
         }
 
         function userMouseUp(event) {
