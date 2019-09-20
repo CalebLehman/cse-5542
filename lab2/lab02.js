@@ -577,9 +577,9 @@ var graphics = (function() {
     }
 
     function collideTri(shape, x, y) {
-        return (y >  -0.5            * vertexBuffScale)
-            && (y < ( 1.732 * x + 1) * vertexBuffScale)
-            && (y < (-1.732 * x + 1) * vertexBuffScale);
+        return (y > -0.5           * vertexBuffScale)
+            && (y <  1.732 * x + 1 * vertexBuffScale)
+            && (y < -1.732 * x + 1 * vertexBuffScale);
     }
 
     function collideSquare(shape, x, y) {
