@@ -577,12 +577,12 @@ var graphics = (function() {
     }
 
     function collideSquare(shape, x, y) {
-        return (x*x + y*y) < vertexBuffScale * vertexBuffScale;
+        // TODO
+        return false;
     }
 
     function collideCircle(shape, x, y) {
-        // TODO
-        return false;
+        return (x*x + y*y) < vertexBuffScale * vertexBuffScale;
     }
 
     function scaleUpCurr() {
