@@ -160,23 +160,19 @@ var userHandler = (function() {
 
             updateMouse(event);
 
-            if (!globalToggle) {
-                if (   (mouseX    != null)
-                    && (mouseY    != null)
-                    && (currShape != null)
-                    && (currColor != null)
-                ) {
-                    var hit = graphics.selectCurrentShape(mouseX, mouseY);
-                    if (!hit) {
-                        graphics.addShape(
-                            currShape,
-                            mouseX,
-                            mouseY,
-                            currColor
-                        );
-                    }
-                    graphics.drawScene();
+            if (   (mouseX    != null) && (mouseY    != null)
+                && (currShape != null) && (currColor != null)
+            ) {
+                var hit = graphics.selectCurrentShape(mouseX, mouseY);
+                if ((!hit) && (!globalToggle)) {
+                    graphics.addShape(
+                        currShape,
+                        mouseX,
+                        mouseY,
+                        currColor
+                    );
                 }
+                graphics.drawScene();
             }
         }
 
@@ -226,7 +222,6 @@ class Shape {
         this.rot   = rot;
         this.scale = scale;
         this.color = color;
-        this.mat   = mat4.create();
     }
 }
 
@@ -505,11 +500,6 @@ var graphics = (function() {
             })
         );
         var inverseMat = mat4.clone(globalTransform);
-        mat4.multiply(
-            inverseMat,
-            inverseMat,
-            shape.mat
-        );
         mat4.invert(inverseMat, inverseMat);
         mat4.multiply(
             transform,
@@ -648,8 +638,28 @@ var graphics = (function() {
         var globalTransform = mat4.create();
         mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
         mat4.scale( globalTransform, globalTransform, globalScale);
+
         shapes.forEach(function (shape) {
-            mat4.multiply(shape.mat, globalTransform, shape.mat);
+            var translate = mat4.clone(globalTransform);
+            mat4.translate(translate, translate, shape.trans);
+            mat4.scale(
+                translate,
+                translate,
+                globalScale.map(function (x) { return 1.0 / x; })
+            );
+            mat4.rotate(
+                translate,
+                translate,
+                -1.0 * globalRot,
+                [0, 0, 1]
+            )
+
+            // TODO couldn't get the getTranslation() method from the library
+            shape.trans = translate.slice(12, 15);
+            shape.rot += globalRot;
+            shape.scale[0] *= globalScale[0];
+            shape.scale[1] *= globalScale[1];
+            shape.scale[2] *= globalScale[2];
         });
         globalRot   = 0.0;
         globalScale = [1, 1, 1];
@@ -695,7 +705,6 @@ var graphics = (function() {
 
         // Bind transformation
         var transform = mat4.clone(globalTransform);
-        mat4.multiply (transform, transform, shape.mat);
         mat4.translate(transform, transform, shape.trans);
         mat4.rotate   (transform, transform, shape.rot, [0, 0, 1]);
         mat4.scale    (transform, transform, shape.scale);
