@@ -179,20 +179,37 @@ var userHandler = (function() {
         function userMouseDrag(event) {
             var canvas = document.getElementById("canvas");
             var canvasRect = canvas.getBoundingClientRect();
-            if (mouseX != null) {
-                deltaX = (event.clientX - canvasRect.left) - mouseX;
-                if (globalToggle) {
-                    graphics.rotateGlobal(
-                        2 * Math.PI * deltaX / canvas.width
-                    );
-                } else {
-                    graphics.rotateCurr(
-                        2 * Math.PI * deltaX / canvas.width
-                    );
+
+            if (event.ctrlKey) {
+                // Translation
+                if ((mouseX != null) && (mouseY != null)) {
+                    deltaX = (event.clientX - canvasRect.left) - mouseX;
+                    deltaY = (event.clientY - canvasRect.top ) - mouseY;
+                    if (globalToggle) {
+                        graphics.transGlobal(deltaX, deltaY);
+                    } else {
+                        graphics.transCurr(deltaX, deltaY);
+                    }
+                    graphics.drawScene();
                 }
-                graphics.drawScene();
+            } else {
+                // Rotation
+                if (mouseX != null) {
+                    deltaX = (event.clientX - canvasRect.left) - mouseX;
+                    if (globalToggle) {
+                        graphics.rotateGlobal(
+                            2 * Math.PI * deltaX / canvas.width
+                        );
+                    } else {
+                        graphics.rotateCurr(
+                            2 * Math.PI * deltaX / canvas.width
+                        );
+                    }
+                    graphics.drawScene();
+                }
             }
             mouseX = event.clientX - canvasRect.left;
+            mouseY = event.clientY - canvasRect.top;
         }
 
         function userMouseUp(event) {
@@ -235,6 +252,7 @@ var graphics = (function() {
     var currentIndex;
     var globalRot;
     var globalScale;
+    var globalTrans;
     var clrColor;
 
     const scaleFactor = 1.5; // Factor scaling operations use
@@ -522,6 +540,7 @@ var graphics = (function() {
         var yNDC =  1 - 2*(y / height);
 
         var globalTransform = mat4.create();
+        mat4.translate(globalTransform, globalTransform, globalTrans);
         mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
         mat4.scale( globalTransform, globalTransform, globalScale);
         for (var i = 0; i < shapes.length; ++i) {
@@ -627,6 +646,23 @@ var graphics = (function() {
         globalRot += rot;
     }
 
+    function transCurr(x, y) {
+        if (currentIndex != null) {
+            var width  = gl.viewportWidth;
+            var height = gl.viewportHeight;
+            var currentShape = shapes[currentIndex];
+            currentShape.trans[0] +=  2*(x / width );
+            currentShape.trans[1] += -2*(y / height);
+        }
+    }
+
+    function transGlobal(x, y) {
+        var width  = gl.viewportWidth;
+        var height = gl.viewportHeight;
+        globalTrans[0] +=  2*(x / width );
+        globalTrans[1] += -2*(y / height);
+    }
+
     function colorCurr(color) {
         if (currentIndex != null) {
             var currentShape = shapes[currentIndex];
@@ -635,12 +671,19 @@ var graphics = (function() {
     }
 
     function bakeGlobals() {
-        var globalTransform = mat4.create();
-        mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
-        mat4.scale( globalTransform, globalTransform, globalScale);
-
         shapes.forEach(function (shape) {
-            var translate = mat4.clone(globalTransform);
+            var translate = mat4.create();
+            mat4.rotate(
+                translate,
+                translate,
+                globalRot,
+                [0, 0, 1]
+            );
+            mat4.scale(
+                translate,
+                translate,
+                globalScale
+            );
             mat4.translate(translate, translate, shape.trans);
             mat4.scale(
                 translate,
@@ -656,6 +699,9 @@ var graphics = (function() {
 
             // TODO couldn't get the getTranslation() method from the library
             shape.trans = translate.slice(12, 15);
+            shape.trans[0] += globalTrans[0];
+            shape.trans[1] += globalTrans[1];
+            shape.trans[2] += globalTrans[2];
             shape.rot += globalRot;
             shape.scale[0] *= globalScale[0];
             shape.scale[1] *= globalScale[1];
@@ -663,6 +709,7 @@ var graphics = (function() {
         });
         globalRot   = 0.0;
         globalScale = [1, 1, 1];
+        globalTrans = [0, 0, 0];
     }
 
     function drawShape(shape, globalTransform) {
@@ -734,6 +781,7 @@ var graphics = (function() {
 
         // Draw shapes
         var globalTransform = mat4.create();
+        mat4.translate(globalTransform, globalTransform, globalTrans);
         mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
         mat4.scale( globalTransform, globalTransform, globalScale);
         shapes.forEach(function (shape) { drawShape(shape, globalTransform); });
@@ -752,6 +800,7 @@ var graphics = (function() {
         shapes      = [];
         globalRot   = 0.0;
         globalScale = [1, 1, 1];
+        globalTrans = [0, 0, 0];
         currentIndex = null;
         clrColor = [1, 1, 1, 1];
     }
@@ -774,6 +823,8 @@ var graphics = (function() {
         scaleDownGlobal: scaleDownGlobal,
         rotateCurr: rotateCurr,
         rotateGlobal: rotateGlobal,
+        transCurr: transCurr,
+        transGlobal: transGlobal,
         colorCurr: colorCurr,
         bakeGlobals: bakeGlobals,
 
