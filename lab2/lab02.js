@@ -59,14 +59,17 @@ var userHandler = (function() {
                 case 82: // "r"
                     colorString = "Red";
                     currColor = "r";
+                    graphics.colorCurr(currColor);
                     break;
                 case 66: // "b"
                     colorString = "Blue";
                     currColor = "b";
+                    graphics.colorCurr(currColor);
                     break;
                 case 71: // "g"
                     colorString = "Green";
                     currColor = "g";
+                    graphics.colorCurr(currColor);
                     break;
 
                 // Command keys
@@ -634,6 +637,13 @@ var graphics = (function() {
         globalRot += rot;
     }
 
+    function colorCurr(color) {
+        if (currentIndex != null) {
+            var currentShape = shapes[currentIndex];
+            currentShape.color = color;
+        }
+    }
+
     function bakeGlobals() {
         var globalTransform = mat4.create();
         mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
@@ -755,6 +765,7 @@ var graphics = (function() {
         scaleDownGlobal: scaleDownGlobal,
         rotateCurr: rotateCurr,
         rotateGlobal: rotateGlobal,
+        colorCurr: colorCurr,
         bakeGlobals: bakeGlobals,
 
         drawScene: drawScene,
