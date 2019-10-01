@@ -17,8 +17,9 @@ Commands/functionality match those given in lab assignment, plus some additional
 ### Basic Drawing
 
 Click in an empty area on the canvas to place a shape or click on an existing
-shape to select it. The currently selected shape is displayed in purple
-regardless of underlying color for visual convenience.
+shape to select it. THE CURRENTLY SELECTED SHAPE IS DISPLAYED IN PURPLE
+REGARDLESS OF UNDERLYING COLOR FOR VISUAL CONVENIENCE, USE `Esc` TO DE-SELECT
+AND VIEW UNDERLYING COLOR.
 
 ### Switching Shpaes
 
@@ -66,7 +67,8 @@ upon de-selection.
     are applied to the world space, instead of to a single
     object. Note that while in "World Mode," rotations and
     scalings are always applied as if the origin lies at
-    the center of the canvas
+    the center of the canvas. Also, drawing new objects
+    is disallowed in "World Mode."
   - `Esc`: De-select current object
 
 ## Bonus Features
