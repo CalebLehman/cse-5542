@@ -542,7 +542,7 @@ var graphics = (function() {
         mat4.rotate(globalTransform, globalTransform, globalRot, [0, 0, 1]);
         mat4.scale( globalTransform, globalTransform, globalScale);
 
-        for (var i = 0; i < shapes.length; ++i) {
+        for (var i = shapes.length - 1; i >= 0; --i) {
             var shape = shapes[i];
             var localCoords = NDCToLocal(
                 shape,
@@ -571,7 +571,7 @@ var graphics = (function() {
 
     // Check if (local) coordinates collide with point
     function collidePoint(shape, x, y) {
-        const tolerance = 0.02; 
+        const tolerance = 0.05;
         return (x <  tolerance * vertexBuffScale)
             && (x > -tolerance * vertexBuffScale)
             && (y <  tolerance * vertexBuffScale)
@@ -580,7 +580,7 @@ var graphics = (function() {
 
     // Check if (local) coordinates collide with line
     function collideLine(shape, x, y) {
-        const tolerance = 0.02; 
+        const tolerance = 0.05;
         return (x <  1.0 *       vertexBuffScale)
             && (x > -1.0 *       vertexBuffScale)
             && (y <  tolerance * vertexBuffScale)
