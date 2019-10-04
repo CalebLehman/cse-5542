@@ -103,7 +103,10 @@ var graphics = (function() {
 
     // Buffers for each shape type
     // TODO
-    const vertexBuffScale = 0.2;
+    var cubeVertexBuff;
+    var cubeColorBuff;
+    var cubeIndexBuff;
+
     var triVertexBuff;
     var squareVertexBuff;
     var circleVertexBuff;
@@ -148,6 +151,65 @@ var graphics = (function() {
 
         // Initial draw
         drawScene();
+    }
+
+    function initCube(scale, color) {
+        // Init vertices
+        var vertices = new Float32Array(
+            [ 1,  1,  1
+            , 1,  1, -1
+            , 1, -1,  1
+            , 1, -1, -1
+            ,-1,  1,  1
+            ,-1,  1, -1
+            ,-1, -1,  1
+            ,-1, -1, -1 ]
+        );
+        vertices = vertices.map(function(v) { return v * scale; });
+        cubeVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        cubeVertexBuff.itemSize = 3;
+        cubeVertexBuff.numItems = 8;
+
+        // Init colors
+        // TODO
+        var colors = new Float32Array(
+            [ 1, 0, 0, 1
+            , 0, 1, 0, 1
+            , 0, 0, 1, 1
+            , 1, 0, 0, 1
+            , 0, 1, 0, 1
+            , 0, 0, 1, 1
+            , 1, 0, 0, 1
+            , 0, 1, 0, 1 ]
+        );
+        cubeColorBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+        cubeColorBuff.itemSize = 4;
+        cubeColorBuff.numItems = 8;
+
+        // Init indices
+        var indices = new Uint16Array(
+            [ 0, 1, 4
+            , 1, 5, 4
+            , 3, 1, 2
+            , 1, 0, 2
+            , 5, 1, 3
+            , 3, 7, 5
+            , 4, 5, 7
+            , 7, 6, 4
+            , 6, 2, 4
+            , 2, 0, 4
+            , 2, 6, 3
+            , 6, 7, 3 ]
+        );
+        cubeIndexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuff);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        cubeIndexBuff.itemSize = 1;
+        cubeIndexBuff.itemSize = 36;
     }
 
     // Initialize the vertex buffers for the square object
