@@ -1,0 +1,62 @@
+<!-- Author - Caleb Lehman (lehman.346) -->
+<!-- Date   - TODO                      -->
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Lab 03 Caleb Lehman (.346)</title>
+    
+    <!-- fragment shader -->
+    <script id="frag-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 vColor;
+
+        void main(void) {
+            gl_FragColor = vColor;
+        }
+    </script>
+    <!-- vertex shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec3 position;
+        attribute vec4 color;
+        varying vec4 vColor;
+
+        uniform mat4 pvmMatrix;
+        
+        void main(void) {
+            gl_PointSize = 2.0;
+
+            gl_Position = pvmMatrix * vec4(position, 1.0);
+            vColor = color;
+        }
+    </script>
+    
+    <!-- scripts -->
+    <script type="text/javascript" src="setup_shaders.js"></script>
+    <script type="text/javascript" src="lab02.js"></script>
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
+</head>
+
+<body onload="graphics.init(); userHandler.init();">
+    <div style="float:left; padding-right:20px;">
+    <canvas id="canvas" style="border:2px solid #000000;" width="500" height="500"></canvas><br/>
+    </div>
+
+    <div style="float:left">
+
+    <h4>Useful Reminders:</h4>
+    <ul>
+        <li>TODO</li>
+    </ul>
+    </div>
+
+    <br style="clear:both" />
+
+    <h2>Usage:</h2>
+    <p>Full usage is documented in <a href="README.md">README</a></p>
+
+</body>
+
+</html>
