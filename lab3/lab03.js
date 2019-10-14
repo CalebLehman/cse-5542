@@ -77,6 +77,20 @@ var userHandler = (function() {
     };
 }());
 
+class Node {
+    constructor(shape, trans, rot, scale) {
+        this.shape    = shape;
+        this.trans    = trans;
+        this.rot      = rot;
+        this.scale    = scale;
+        this.parent   = null;
+        this.children = []
+    }
+    addChild(child) {
+        this.children.push(child);
+        child.parent = this;
+    }
+}
 
 // Class for storing shape data necessary for drawing
 class Shape {
@@ -100,11 +114,11 @@ var graphics = (function() {
     const cameraUp       = [0, 1, 0];
 
     // Current list of shapes to draw
-    var shapes;
+    var shapes; // TODO
+    var root;   // TODO
     var clrColor;
 
     // Buffers for each shape type
-    // TODO
     var cubeVertexBuff;
     var cubeColorBuffAll;
     var cubeIndexBuff;
@@ -130,7 +144,6 @@ var graphics = (function() {
         gl.viewportHeight = canvas.height;
 
         // Set up shaders
-        // TODO
         shaderProgram = setup_shaders.initShaders(gl);
         // Vertex position attribute
         shaderProgram.vertexPositionAttribute =
@@ -144,6 +157,7 @@ var graphics = (function() {
         gl.enableVertexAttribArray(
             shaderProgram.vertexColorAttribute
         );
+        // Transformation matrix uniform
         shaderProgram.pvmMatrix =
             gl.getUniformLocation(shaderProgram, "pvmMatrix");
         gl.enable(gl.DEPTH_TEST);
@@ -196,6 +210,8 @@ var graphics = (function() {
                 "all"
             )
         );
+
+        // TODO build root / tree
     }
 
     function initCylinder(botRadius, topRadius, height, vSlices, hSlices) {
@@ -525,6 +541,32 @@ var graphics = (function() {
 
         // Generate model matrix TODO
         var mMatrix = mat4.create();
+
+        /*
+        var stack    = [root];
+        var matrices = [mat4.clone(mMatrix)];
+        while (stack.length > 0) {
+            var node = stack.pop();
+            if (node.parent && node.parent.chldren.length > 1) {
+                // TODO push clone of mMatrix
+                matrices.push(mat4.clone(mMatrix)];
+            }
+            // TODO update mMatrix
+            mat4.translate(mMatrix, mMatrix, node.trans);
+            mat4.rotate   (mMatrix, mMatrix, node.rot.angle, node.rot.axis);
+            mat4.scale    (mMatrix, mMatrix, node.scale);
+            // TODO draw node
+            drawShape(node.shape, pvMatrix, mMatrix);
+
+            if (node.children.length === 0) {
+                // TODO pop mMatrix
+                mMatrix = matrices.pop();
+            }
+
+            // TODO push children
+            stack.push(...node.children);
+        }
+        */
 
         // Draw shapes
         shapes.forEach(function (shape) { drawShape(shape, pvMatrix, mMatrix); });
