@@ -113,6 +113,10 @@ var graphics = (function() {
     var sphereColorBuffAll;
     var sphereIndexBuff;
 
+    var cylVertexBuff;
+    var cylColorBuffAll;
+    var cylIndexBuff;
+
 
     // *** INITIALIZATION ***
     // Initialize WebGL context and set up shaders
@@ -148,6 +152,7 @@ var graphics = (function() {
         // TODO init colors here as well
         initCube(0.5);
         initSphere(0.5, 32, 32);
+        initCylinder(0.5, 0.25, 0.5, 32, 32);
         initScene();
 
         // Initial draw
@@ -157,6 +162,30 @@ var graphics = (function() {
     function initScene() {
         //shapes.push(new Shape("cube", 0, 0, 1, "all"));
         shapes.push(new Shape("sphere", 0, 0, 1, "all"));
+        shapes.push(new Shape("cylinder", 0, 0, 1, "all"));
+    }
+
+    function initCylinder(botRadius, topRadius, height, vSlices, hSlices) {
+        // Init vertices
+        var vertices = [0, -height / 2.0, 0];
+        for (var hSlice = 0; hSlice < hSlices; ++hSlice) {
+            var prop = hSlice / (hSlices - 1);
+            var y = -height / 2.0 + height * prop;
+            var r = botRadius * (1 - prop) + topRadius * prop;
+            for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+                var x = r * Math.cos(2 * Math.PI * vSlice / vSlices);
+                var z = r * Math.sin(2 * Math.PI * vSlice / vSlices);
+                vertices.push(x, y, z);
+            }
+        }
+        vertices.push(0, height / 2.0, 0);
+        vertices = new Float32Array(vertices);
+        cylVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cylVertexBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        cylVertexBuff.itemSize = 3;
+        cylVertexBuff.numItems = 2 + vSlices * hSlices;
+        console.log(vertices);
     }
 
     function initSphere(scale, vSlices, hSlices) {
