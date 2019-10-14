@@ -193,8 +193,8 @@ var graphics = (function() {
             [ 0, 0, 1, 1 ]
         ];
         var colorsAll = [];
-        while (colorsAll.length < vertices.length) {
-            colorsAll.push(...colors[colorsAll.length % 3]);
+        for (var i = 0; i < 2 + vSlices * hSlices; ++i) {
+            colorsAll.push(...colors[i % 3]);
         }
         colorsAll = new Float32Array(colorsAll);
         cylColorBuffAll = gl.createBuffer();
