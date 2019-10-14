@@ -152,7 +152,7 @@ var graphics = (function() {
         // TODO init colors here as well
         initCube(0.5);
         initSphere(0.5, 32, 32);
-        initCylinder(0.5, 0.25, 0.5, 32, 32);
+        initCylinder(0.5, 0.25, 0.5, 4, 2);
         initScene();
 
         // Initial draw
@@ -185,7 +185,63 @@ var graphics = (function() {
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         cylVertexBuff.itemSize = 3;
         cylVertexBuff.numItems = 2 + vSlices * hSlices;
-        console.log(vertices);
+
+        // Init colors
+        var colors = [
+            [ 1, 0, 0, 1 ],
+            [ 0, 1, 0, 1 ],
+            [ 0, 0, 1, 1 ]
+        ];
+        var colorsAll = [];
+        while (colorsAll.length < vertices.length) {
+            colorsAll.push(...colors[colorsAll.length % 3]);
+        }
+        colorsAll = new Float32Array(colorsAll);
+        cylColorBuffAll = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cylColorBuffAll);
+        gl.bufferData(gl.ARRAY_BUFFER, colorsALL, gl.STATIC_DRAW);
+        cylColorBuffAll.itemSize = 4;
+        cylColorBuffAll.numItems = 2 + vSlices * hSlices;
+
+        // Init indices
+        function indexer(h, v) {
+            return 1 + h * vSlices + v % vSlices;
+        }
+        var indices = [];
+        for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+            indices.push(0, indexer(0, vSlice + 1), indexer(0, vSlice));
+        }
+        for (var hSlice = 0; hSlice < hSlices - 1; ++hSlice) {
+            for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+                indices.push(
+                    indexer(hSlice    , vSlice    ),
+                    indexer(hSlice + 1, vSlice + 1),
+                    indexer(hSlice + 1, vSlice    )
+                );
+                indices.push(
+                    indexer(hSlice    , vSlice    ),
+                    indexer(hSlice    , vSlice + 1),
+                    indexer(hSlice + 1, vSlice + 1)
+                );
+            }
+        }
+        for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+            indices.push(
+                indexer(hSlices - 1, vSlice    ),
+                indexer(hSlices - 1, vSlice + 1),
+                indexer(hSlices    , 0         )
+            );
+        }
+        indices = new Uint16Array(indices);
+        cylIndexBuff = gl.createBuffer;
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cylIndexBuff);
+        gl.bufferData(
+            gl.ELEMENT_ARRAY_BUFFER,
+            indices,
+            gl.STATIC_DRAW
+        );
+        cylIndexBuff.itemSize = 1;
+        cylIndexBuff.numItems = 2*3*vSlices + 6*(hSlices-1)*vSlices;
     }
 
     function initSphere(scale, vSlices, hSlices) {
@@ -215,9 +271,9 @@ var graphics = (function() {
             [ 1, 0, 0, 1 ],
             [ 0, 1, 0, 1 ],
             [ 0, 0, 1, 1 ]
-        ]
+        ];
 
-        var colorsAll = [1, 0, 0, 1]
+        var colorsAll = [1, 0, 0, 1];
         for (var hSlice = 0; hSlice < hSlices; ++hSlice) {
             for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
                 colorsAll.push(
@@ -349,6 +405,10 @@ var graphics = (function() {
                 vertexBuff = sphereVertexBuff;
                 indexBuff  = sphereIndexBuff;
                 break;
+            case "cylinder":
+                vertexBuff = cylVertexBuff;
+                indexBuff  = cylIndexBuff;
+                break;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.vertexAttribPointer(
@@ -371,6 +431,11 @@ var graphics = (function() {
             case "sphere":
                 switch (shape.color) {
                     case "all": colorBuff = sphereColorBuffAll; break;
+                }
+                break;
+            case "cylinder":
+                switch (shape.color) {
+                    case "all": colorBuff = cylColorBuffAll; break;
                 }
                 break;
         }
