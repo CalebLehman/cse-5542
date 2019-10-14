@@ -160,9 +160,33 @@ var graphics = (function() {
     }
 
     function initScene() {
-        //shapes.push(new Shape("cube", 0, 0, 1, "all"));
-        //shapes.push(new Shape("sphere", 0, 0, 1, "all"));
-        shapes.push(new Shape("cylinder", 0, 0, 1, "all"));
+        shapes.push(
+            new Shape(
+                "cube",
+                [-2, 0, 0],
+                {angle: 0, axis: [0, 1, 0]},
+                [1, 1, 1],
+                "all"
+            )
+        );
+        shapes.push(
+            new Shape(
+                "sphere",
+                [0, 0, 0],
+                {angle: 0, axis: [0, 1, 0]},
+                [1, 1, 1],
+                "all"
+            )
+        );
+        shapes.push(
+            new Shape(
+                "cylinder",
+                [2, 0, 0],
+                {angle: 0, axis: [0, 1, 0]},
+                [1, 1, 1],
+                "all"
+            )
+        );
     }
 
     function initCylinder(botRadius, topRadius, height, vSlices, hSlices) {
@@ -272,21 +296,16 @@ var graphics = (function() {
             [ 0, 1, 0, 1 ],
             [ 0, 0, 1, 1 ]
         ];
-
-        var colorsAll = [1, 0, 0, 1];
-        for (var hSlice = 0; hSlice < hSlices; ++hSlice) {
-            for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
-                colorsAll.push(
-                    ...colors[(hSlice * vSlices + vSlice) % 3]
-                );
-            }
+        var colorsAll = [];
+        for (var i = 0; i < 2 + vSlices * hSlices; ++i) {
+            colorsAll.push(...colors[i % 3]);
         }
-        colorsAll.push(1, 0, 0, 1);
+        colorsAll = new Float32Array(colorsAll);
         sphereColorBuffAll = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, sphereColorBuffAll);
         gl.bufferData(
             gl.ARRAY_BUFFER,
-            new Float32Array(colorsAll),
+            colorsAll,
             gl.STATIC_DRAW
         );
         sphereColorBuffAll.itemSize = 4;
@@ -392,7 +411,7 @@ var graphics = (function() {
     }
 
     // Draws a single shape
-    function drawShape(shape, pvMatrix) {
+    function drawShape(shape, pvMatrix, mMatrix) {
         // Bind vertices
         var vertexBuff;
         var indexBuff;
@@ -453,8 +472,12 @@ var graphics = (function() {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
 
         // Bind transformation
-        var pvmMatrix = mat4.clone(pvMatrix);
-        // TODO build pvmMatrix
+        var pvmMatrix = mat4.create();
+        mat4.multiply(pvmMatrix, pvMatrix, mMatrix);
+        mat4.translate(pvmMatrix, pvmMatrix, shape.trans);
+        mat4.rotate(   pvmMatrix, pvmMatrix, shape.rot.angle, shape.rot.axis);
+        mat4.scale(    pvmMatrix, pvmMatrix, shape.scale);
+
         gl.uniformMatrix4fv(
             shaderProgram.pvmMatrix,
             false,
