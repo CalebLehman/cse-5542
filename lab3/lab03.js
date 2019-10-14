@@ -150,9 +150,9 @@ var graphics = (function() {
 
         // Initialize shape buffers
         // TODO init colors here as well
-        initCube(0.5);
-        initSphere(0.5, 32, 32);
-        initCylinder(0.5, 0.25, 0.5, 4, 2);
+        initCube(1);
+        initSphere(1, 32, 32);
+        initCylinder(1, 0.5, 1, 32, 2);
         initScene();
 
         // Initial draw
@@ -163,9 +163,18 @@ var graphics = (function() {
         shapes.push(
             new Shape(
                 "cube",
-                [-2, 0, 0],
+                [0, 0, -0.05],
                 {angle: 0, axis: [0, 1, 0]},
-                [1, 1, 1],
+                [5, 0.1, 5],
+                "all"
+            )
+        );
+        shapes.push(
+            new Shape(
+                "cube",
+                [-2, 0, 0],
+                {angle: 1.0, axis: [0, 0, 1]},
+                [0.5, 0.5, 0.5],
                 "all"
             )
         );
@@ -174,7 +183,7 @@ var graphics = (function() {
                 "sphere",
                 [0, 0, 0],
                 {angle: 0, axis: [0, 1, 0]},
-                [1, 1, 1],
+                [0.5, 0.5, 0.5],
                 "all"
             )
         );
@@ -183,7 +192,7 @@ var graphics = (function() {
                 "cylinder",
                 [2, 0, 0],
                 {angle: 0, axis: [0, 1, 0]},
-                [1, 1, 1],
+                [0.5, 0.5, 0.5],
                 "all"
             )
         );
@@ -514,8 +523,11 @@ var graphics = (function() {
         mat4.lookAt(vMatrix, cameraPosition, cameraCOI, cameraUp);
         mat4.multiply(pvMatrix, pvMatrix, vMatrix);
 
+        // Generate model matrix TODO
+        var mMatrix = mat4.create();
+
         // Draw shapes
-        shapes.forEach(function (shape) { drawShape(shape, pvMatrix); });
+        shapes.forEach(function (shape) { drawShape(shape, pvMatrix, mMatrix); });
     }
 
     // Clear all graphics data
