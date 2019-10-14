@@ -80,11 +80,12 @@ var userHandler = (function() {
 
 // Class for storing shape data necessary for drawing
 class Shape {
-    constructor(type, trans, rot, scale) {
+    constructor(type, trans, rot, scale, color) {
         this.type  = type;
         this.trans = trans;
         this.rot   = rot;
         this.scale = scale;
+        this.color = color;
     }
 }
 
@@ -93,23 +94,25 @@ var graphics = (function() {
     var gl;
     var shaderProgram;
 
+    // Initial camera parameters
+    const cameraPosition = [2, 2, 5];
+    const cameraCOI      = [0, 0, 0];
+    const cameraUp       = [0, 1, 0];
+
     // Current list of shapes to draw
     var shapes;
-    var currentIndex;
     var clrColor;
-
-    const scaleFactor = 1.5; // Factor scaling operations use
-
 
     // Buffers for each shape type
     // TODO
     var cubeVertexBuff;
-    var cubeColorBuff;
+    var cubeColorBuffAll;
     var cubeIndexBuff;
 
-    var triVertexBuff;
-    var squareVertexBuff;
-    var circleVertexBuff;
+    var sphereVertexBuff;
+    var sphereColorBuffAll;
+    var sphereIndexBuff;
+
 
     // *** INITIALIZATION ***
     // Initialize WebGL context and set up shaders
@@ -143,17 +146,108 @@ var graphics = (function() {
 
         // Initialize shape buffers
         // TODO init colors here as well
-        initPoint();
-        initLine();
-        initTri();
-        initSquare();
-        initCircle();
+        initCube(0.5);
+        initSphere(0.5, 32, 32);
+        initScene();
 
         // Initial draw
         drawScene();
     }
 
-    function initCube(scale, color) {
+    function initScene() {
+        //shapes.push(new Shape("cube", 0, 0, 1, "all"));
+        shapes.push(new Shape("sphere", 0, 0, 1, "all"));
+    }
+
+    function initSphere(scale, vSlices, hSlices) {
+        // Init vertices
+        var vertices = [0, -1, 0];
+        for (var hSlice = 0; hSlice < hSlices; ++hSlice) {
+            var y = -1 + 2 * (hSlice + 1) / (hSlices + 1);
+            var r = Math.sqrt(1 - y*y);
+            for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+                var x = r * Math.cos(2 * Math.PI * vSlice / vSlices);
+                var z = r * Math.sin(2 * Math.PI * vSlice / vSlices);
+                vertices.push(x, y, z);
+            }
+        }
+        vertices.push(0, 1, 0);
+        vertices = new Float32Array(
+            vertices.map(function(v) { return v * scale; })
+        );
+        sphereVertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexBuff);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        sphereVertexBuff.itemSize = 3;
+        sphereVertexBuff.numItems = 2 + vSlices * hSlices;
+        
+        // Init colors
+        var colors = [
+            [ 1, 0, 0, 1 ],
+            [ 0, 1, 0, 1 ],
+            [ 0, 0, 1, 1 ]
+        ]
+
+        var colorsAll = [1, 0, 0, 1]
+        for (var hSlice = 0; hSlice < hSlices; ++hSlice) {
+            for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+                colorsAll.push(
+                    ...colors[(hSlice * vSlices + vSlice) % 3]
+                );
+            }
+        }
+        colorsAll.push(1, 0, 0, 1);
+        sphereColorBuffAll = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, sphereColorBuffAll);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(colorsAll),
+            gl.STATIC_DRAW
+        );
+        sphereColorBuffAll.itemSize = 4;
+        sphereColorBuffAll.numItems = 2 + vSlices * hSlices;
+
+        // Init indices
+        function indexer(h, v) {
+            return 1 + h * vSlices + v % vSlices;
+        }
+        var indices = [];
+        for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+            indices.push(0, indexer(0, vSlice + 1), indexer(0, vSlice));
+        }
+        for (var hSlice = 0; hSlice < hSlices - 1; ++hSlice) {
+            for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+                indices.push(
+                    indexer(hSlice    , vSlice    ),
+                    indexer(hSlice + 1, vSlice + 1),
+                    indexer(hSlice + 1, vSlice    )
+                );
+                indices.push(
+                    indexer(hSlice    , vSlice    ),
+                    indexer(hSlice    , vSlice + 1),
+                    indexer(hSlice + 1, vSlice + 1)
+                );
+            }
+        }
+        for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
+            indices.push(
+                indexer(hSlices - 1, vSlice    ),
+                indexer(hSlices - 1, vSlice + 1),
+                indexer(hSlices    , 0         )
+            );
+        }
+        sphereIndexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereIndexBuff);
+        gl.bufferData(
+            gl.ELEMENT_ARRAY_BUFFER,
+            new Uint16Array(indices),
+            gl.STATIC_DRAW
+        );
+        sphereIndexBuff.itemSize = 1;
+        sphereIndexBuff.numItems = 2*3*vSlices + 6*(hSlices-1)*vSlices;
+    }
+
+    function initCube(scale) {
         // Init vertices
         var vertices = new Float32Array(
             [ 1,  1,  1
@@ -174,7 +268,7 @@ var graphics = (function() {
 
         // Init colors
         // TODO
-        var colors = new Float32Array(
+        var colorsAll = new Float32Array(
             [ 1, 0, 0, 1
             , 0, 1, 0, 1
             , 0, 0, 1, 1
@@ -184,11 +278,11 @@ var graphics = (function() {
             , 1, 0, 0, 1
             , 0, 1, 0, 1 ]
         );
-        cubeColorBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuff);
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-        cubeColorBuff.itemSize = 4;
-        cubeColorBuff.numItems = 8;
+        cubeColorBuffAll = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuffAll);
+        gl.bufferData(gl.ARRAY_BUFFER, colorsAll, gl.STATIC_DRAW);
+        cubeColorBuffAll.itemSize = 4;
+        cubeColorBuffAll.numItems = 8;
 
         // Init indices
         var indices = new Uint16Array(
@@ -209,143 +303,23 @@ var graphics = (function() {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuff);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
         cubeIndexBuff.itemSize = 1;
-        cubeIndexBuff.itemSize = 36;
-    }
-
-    // Initialize the vertex buffers for the square object
-    // TODO
-    function initSquare() {
-        squareVertexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexBuff);
-
-        var vertices = new Float32Array(
-            [-0.707,-0.707, 0.000
-            , 0.707,-0.707, 0.000
-            , 0.707, 0.707, 0.000
-            ,-0.707, 0.707, 0.000 ]
-        );
-        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-        squareVertexBuff.itemSize = 3; // Three values per vertex
-        squareVertexBuff.numItems = 4; // Four vertices
-        squareVertexBuff.mode     = gl.TRIANGLE_FAN;
-    }
-
-    // Initialize the vertex buffers for the circle object
-    // TODO
-    function initCircle() {
-        circleVertexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, circleVertexBuff);
-
-        var n = MAX_LENGTH - 2;
-        var vertices = [0.0, 0.0, 0.0];
-        for (var i = 0; i <= n; ++i) {
-            vertices.push(
-                Math.cos(2*i*Math.PI / n),
-                Math.sin(2*i*Math.PI / n),
-                0.0 
-            );
-        }
-        vertices = vertices.map(function(val) { return val * vertexBuffScale; });
-        vertices = new Float32Array(vertices);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-        circleVertexBuff.itemSize = 3;          // Three values per vertex
-        circleVertexBuff.numItems = MAX_LENGTH; // MAX_LENGTH vertices
-        circleVertexBuff.mode     = gl.TRIANGLE_FAN;
-    }
-
-    // *** SELECTION METHODS ***
-    function unselectCurrentShape() {
-        currentIndex = null;
-    }
-
-    // Given viewport coordinates
-    //   select the corresponding shape and return true
-    //   or
-    //   return false if coordinates correspond to no shape
-    // Checks from most-recently-drawn to least-recently-drawn
-    // TODO
-    function selectCurrentShape(x, y) {
-        // Convert x, y from viewport coordinates
-        // to NDC coordinates
-        var width  = gl.viewportWidth;
-        var height = gl.viewportHeight;
-        var xNDC = -1 + 2*(x / width );
-        var yNDC =  1 - 2*(y / height);
-
-        for (var i = shapes.length - 1; i >= 0; --i) {
-            var shape = shapes[i];
-            var localCoords = NDCToLocal(
-                shape,
-                xNDC,
-                yNDC,
-                globalTransform
-            );
-            var xLocal = localCoords.x;
-            var yLocal = localCoords.y;
-
-            var hit = false;
-            switch (shape.type) {
-                case "p": hit = collidePoint(shape, xLocal, yLocal);  break;
-                case "h": hit = collideLine(shape, xLocal, yLocal);   break;
-                case "t": hit = collideTri(shape, xLocal, yLocal);    break;
-                case "q": hit = collideSquare(shape, xLocal, yLocal); break;
-                case "o": hit = collideCircle(shape, xLocal, yLocal); break;
-            }
-            if (hit) {
-                currentIndex = i;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Check if (local) coordinates collide with point
-    function collidePoint(shape, x, y) {
-        const tolerance = 0.05;
-        return (x <  tolerance * vertexBuffScale)
-            && (x > -tolerance * vertexBuffScale)
-            && (y <  tolerance * vertexBuffScale)
-            && (y > -tolerance * vertexBuffScale);
-    }
-
-    // Check if (local) coordinates collide with line
-    function collideLine(shape, x, y) {
-        const tolerance = 0.05;
-        return (x <  1.0 *       vertexBuffScale)
-            && (x > -1.0 *       vertexBuffScale)
-            && (y <  tolerance * vertexBuffScale)
-            && (y > -tolerance * vertexBuffScale);
-    }
-
-    // Check if (local) coordinates collide with triangle
-    function collideTri(shape, x, y) {
-        return (y > -0.5           * vertexBuffScale)
-            && (y <  1.732 * x + 1 * vertexBuffScale)
-            && (y < -1.732 * x + 1 * vertexBuffScale);
-    }
-
-    // Check if (local) coordinates collide with square
-    function collideSquare(shape, x, y) {
-        return (x <  0.707 * vertexBuffScale)
-            && (x > -0.707 * vertexBuffScale)
-            && (y <  0.707 * vertexBuffScale)
-            && (y > -0.707 * vertexBuffScale);
-    }
-
-    // Check if (local) coordinates collide with circle
-    function collideCircle(shape, x, y) {
-        return (x*x + y*y) < vertexBuffScale * vertexBuffScale;
+        cubeIndexBuff.numItems = 36;
     }
 
     // Draws a single shape
-    function drawShape(shape) {
+    function drawShape(shape, pvMatrix) {
         // Bind vertices
         var vertexBuff;
+        var indexBuff;
         switch (shape.type) {
-            // TODO
+            case "cube":
+                vertexBuff = cubeVertexBuff;
+                indexBuff  = cubeIndexBuff;
+                break;
+            case "sphere":
+                vertexBuff = sphereVertexBuff;
+                indexBuff  = sphereIndexBuff;
+                break;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.vertexAttribPointer(
@@ -359,8 +333,17 @@ var graphics = (function() {
 
         // Bind colors
         var colorBuff;
-        switch (shape.color) {
-            // TODO
+        switch (shape.type) {
+            case "cube":
+                switch (shape.color) {
+                    case "all": colorBuff = cubeColorBuffAll; break;
+                }
+                break;
+            case "sphere":
+                switch (shape.color) {
+                    case "all": colorBuff = sphereColorBuffAll; break;
+                }
+                break;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
         gl.vertexAttribPointer(
@@ -372,9 +355,11 @@ var graphics = (function() {
             0
         );
 
+        // Bind element arrays
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
+
         // Bind transformation
-        // TODO
-        var pvmMatrix = mat4.create();
+        var pvmMatrix = mat4.clone(pvMatrix);
         // TODO build pvmMatrix
         gl.uniformMatrix4fv(
             shaderProgram.pvmMatrix,
@@ -383,7 +368,12 @@ var graphics = (function() {
         );
 
         // Draw
-        gl.drawArrays(vertexBuff.mode, 0, vertexBuff.numItems);
+        gl.drawElements(
+            gl.TRIANGLES,
+            indexBuff.numItems,
+            gl.UNSIGNED_SHORT,
+            0
+        );
     }
 
     // Uses current information to draw scene
@@ -400,14 +390,20 @@ var graphics = (function() {
         );
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        // Generate perpective-view matrix
+        var pvMatrix = mat4.create();
+        mat4.perspective(pvMatrix, 1.0, width / height, 0.1, 100);
+        var vMatrix = mat4.create();
+        mat4.lookAt(vMatrix, cameraPosition, cameraCOI, cameraUp);
+        mat4.multiply(pvMatrix, pvMatrix, vMatrix);
+
         // Draw shapes
-        shapes.forEach(drawShape);
+        shapes.forEach(function (shape) { drawShape(shape, pvMatrix); });
     }
 
     // Clear all graphics data
     function clear() {
         shapes      = [];
-        currentIndex = null;
         clrColor = [1, 1, 1, 1];
     }
 
@@ -418,9 +414,6 @@ var graphics = (function() {
 
     return {
         init: init,
-
-        selectCurrentShape: selectCurrentShape,
-        unselectCurrentShape: unselectCurrentShape,
 
         drawScene: drawScene,
 
