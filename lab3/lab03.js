@@ -161,7 +161,7 @@ var graphics = (function() {
 
     function initScene() {
         //shapes.push(new Shape("cube", 0, 0, 1, "all"));
-        shapes.push(new Shape("sphere", 0, 0, 1, "all"));
+        //shapes.push(new Shape("sphere", 0, 0, 1, "all"));
         shapes.push(new Shape("cylinder", 0, 0, 1, "all"));
     }
 
@@ -199,7 +199,7 @@ var graphics = (function() {
         colorsAll = new Float32Array(colorsAll);
         cylColorBuffAll = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, cylColorBuffAll);
-        gl.bufferData(gl.ARRAY_BUFFER, colorsALL, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, colorsAll, gl.STATIC_DRAW);
         cylColorBuffAll.itemSize = 4;
         cylColorBuffAll.numItems = 2 + vSlices * hSlices;
 
@@ -233,7 +233,7 @@ var graphics = (function() {
             );
         }
         indices = new Uint16Array(indices);
-        cylIndexBuff = gl.createBuffer;
+        cylIndexBuff = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cylIndexBuff);
         gl.bufferData(
             gl.ELEMENT_ARRAY_BUFFER,
