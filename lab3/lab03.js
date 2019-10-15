@@ -6,6 +6,8 @@ var userHandler = (function() {
     var mouseX;
     var mouseY;
 
+    const deltaAngle = 0.05;
+
     // *** INITIALIZATION ***
     // Initialization function for user handler
     function init() {
@@ -28,11 +30,32 @@ var userHandler = (function() {
             // Command keys
             // TODO
 
-            // Misc. keys
-            case 68: // "d"
-                graphics.drawScene();
+            case 68: // "c"
+                graphics.clear();
+                break;
+            case 80: // "p"
+                if (event.shiftKey) {
+                    graphics.pitch(+deltaAngle);
+                } else {
+                    graphics.pitch(-deltaAngle);
+                }
+                break;
+            case 89: // "y"
+                if (event.shiftKey) {
+                    graphics.yaw(+deltaAngle);
+                } else {
+                    graphics.yaw(-deltaAngle);
+                }
+                break;
+            case 82: // "r"
+                if (event.shiftKey) {
+                    graphics.roll(+deltaAngle);
+                } else {
+                    graphics.roll(-deltaAngle);
+                }
                 break;
         }
+        graphics.drawScene();
     }
 
     // Update stored mouse coordinates with
@@ -85,8 +108,10 @@ class Node {
         this.scale    = scale;
         this.parent   = null;
         this.children = []
+        this.initial  = true;
     }
     addChild(child) {
+        child.initial = this.children.length === 0;
         this.children.push(child);
         child.parent = this;
     }
@@ -112,10 +137,12 @@ var graphics = (function() {
     const cameraPosition = [2, 2, 5];
     const cameraCOI      = [0, 0, 0];
     const cameraUp       = [0, 1, 0];
+    var   cameraPitch    = 0.0;
+    var   cameraYaw      = 0.0;
+    var   cameraRoll     = 0.0;
 
     // Current list of shapes to draw
-    var shapes; // TODO
-    var root;   // TODO
+    var root;
     var clrColor;
 
     // Buffers for each shape type
@@ -163,7 +190,6 @@ var graphics = (function() {
         gl.enable(gl.DEPTH_TEST);
 
         // Initialize shape buffers
-        // TODO init colors here as well
         initCube(1);
         initSphere(1, 32, 32);
         initCylinder(1, 0.5, 1, 32, 2);
@@ -174,44 +200,84 @@ var graphics = (function() {
     }
 
     function initScene() {
-        shapes.push(
-            new Shape(
-                "cube",
-                [0, 0, -0.05],
-                {angle: 0, axis: [0, 1, 0]},
-                [5, 0.1, 5],
-                "all"
-            )
+        // Shapes
+        var floor = new Shape(
+            "cube",
+            [0, 0, 0],
+            {angle: 0.0, axis: [0, 0, 1]},
+            [5, 0.1, 5],
+            "all"
         );
-        shapes.push(
-            new Shape(
-                "cube",
-                [-2, 0, 0],
-                {angle: 1.0, axis: [0, 0, 1]},
-                [0.5, 0.5, 0.5],
-                "all"
-            )
+        var cube = new Shape(
+            "cube",
+            [0, 0, 0],
+            {angle: 0.0, axis: [0, 0, 1]},
+            [0.5, 0.5, 0.5],
+            "all"
         );
-        shapes.push(
-            new Shape(
-                "sphere",
-                [0, 0, 0],
-                {angle: 0, axis: [0, 1, 0]},
-                [0.5, 0.5, 0.5],
-                "all"
-            )
+        var sphere = new Shape(
+            "sphere",
+            [0, 0, 0],
+            {angle: 0.0, axis: [0, 0, 1]},
+            [0.2, 0.2, 0.2],
+            "all"
         );
-        shapes.push(
-            new Shape(
-                "cylinder",
-                [2, 0, 0],
-                {angle: 0, axis: [0, 1, 0]},
-                [0.5, 0.5, 0.5],
-                "all"
-            )
+        var empty = new Shape(
+            "none",
+            [0, 0, 0],
+            {angle: 0.0, axis: [0, 1, 0]},
+            [0, 0, 0],
+            "all"
         );
 
-        // TODO build root / tree
+        root = new Node(
+            empty,
+            [0, 0, 0],
+            {angle: 0.0, axis: [0, 1, 0]},
+            [1, 1, 1]
+        );
+        root.addChild(new Node(
+                floor,
+                [0, -.1, 0],
+                {angle: 0.0, axis: [0, 1, 0]},
+                [1, 1, 1]
+            )
+        );
+        var child = new Node(
+            cube,
+            [0, 2, 0],
+            {angle: 0.0, axis: [0, 1, 0]},
+            [1, 1, 1]
+        );
+        child.addChild(new Node(
+                sphere,
+                [1, 0, 0],
+                {angle: 0.0, axis: [0, 1, 0]},
+                [1, 1, 1]
+            )
+        );
+        child.addChild(new Node(
+                sphere,
+                [0, 0, 1],
+                {angle: 0.0, axis: [0, 1, 0]},
+                [1, 1, 1]
+            )
+        );
+        child.addChild(new Node(
+                sphere,
+                [-1, 0, 0],
+                {angle: 0.0, axis: [0, 1, 0]},
+                [1, 1, 1]
+            )
+        );
+        child.addChild(new Node(
+                sphere,
+                [0, 0, -1],
+                {angle: 0.0, axis: [0, 1, 0]},
+                [1, 1, 1]
+            )
+        );
+        root.addChild(child);
     }
 
     function initCylinder(botRadius, topRadius, height, vSlices, hSlices) {
@@ -396,7 +462,6 @@ var graphics = (function() {
         cubeVertexBuff.numItems = 8;
 
         // Init colors
-        // TODO
         var colorsAll = new Float32Array(
             [ 1, 0, 0, 1
             , 0, 1, 0, 1
@@ -453,6 +518,9 @@ var graphics = (function() {
                 vertexBuff = cylVertexBuff;
                 indexBuff  = cylIndexBuff;
                 break;
+            default:
+                // Unrecognized shape
+                return;
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.vertexAttribPointer(
@@ -533,54 +601,70 @@ var graphics = (function() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Generate perpective-view matrix
-        var pvMatrix = mat4.create();
-        mat4.perspective(pvMatrix, 1.0, width / height, 0.1, 100);
+        var pMatrix = mat4.create();
+        mat4.perspective(pMatrix, 1.0, width / height, 0.1, 100);
+
+        var tiltMatrix = mat4.create();
+        mat4.rotate(tiltMatrix, tiltMatrix, cameraPitch, [1, 0, 0]);
+        mat4.rotate(tiltMatrix, tiltMatrix, cameraYaw,   [0, 1, 0]);
+        mat4.rotate(tiltMatrix, tiltMatrix, cameraRoll,  [0, 0, 1]);
+
         var vMatrix = mat4.create();
         mat4.lookAt(vMatrix, cameraPosition, cameraCOI, cameraUp);
+
+        var pvMatrix = mat4.create();
+        mat4.multiply(pvMatrix, pMatrix, tiltMatrix);
         mat4.multiply(pvMatrix, pvMatrix, vMatrix);
 
-        // Generate model matrix TODO
+        // Walk hierarchy tree
+        // while updating model matrix
         var mMatrix = mat4.create();
 
-        /*
         var stack    = [root];
         var matrices = [mat4.clone(mMatrix)];
         while (stack.length > 0) {
             var node = stack.pop();
-            if (node.parent && node.parent.chldren.length > 1) {
-                // TODO push clone of mMatrix
-                matrices.push(mat4.clone(mMatrix)];
+            if (!node.initial) {
+                // push clone of mMatrix
+                matrices.push(mat4.clone(mMatrix));
             }
-            // TODO update mMatrix
+            // update mMatrix
             mat4.translate(mMatrix, mMatrix, node.trans);
             mat4.rotate   (mMatrix, mMatrix, node.rot.angle, node.rot.axis);
             mat4.scale    (mMatrix, mMatrix, node.scale);
-            // TODO draw node
+            // draw node
             drawShape(node.shape, pvMatrix, mMatrix);
 
             if (node.children.length === 0) {
-                // TODO pop mMatrix
+                // pop mMatrix
                 mMatrix = matrices.pop();
             }
 
-            // TODO push children
+            // push children
             stack.push(...node.children);
         }
-        */
-
-        // Draw shapes
-        shapes.forEach(function (shape) { drawShape(shape, pvMatrix, mMatrix); });
     }
 
     // Clear all graphics data
     function clear() {
-        shapes      = [];
         clrColor = [1, 1, 1, 1];
     }
 
     // Choose different background color
     function setBackground(r, g, b, alpha) {
         clrColor = [r, g, b, alpha];
+    }
+
+    function pitch(angle) {
+        cameraPitch += angle;
+    }
+
+    function yaw(angle) {
+        cameraYaw += angle;
+    }
+
+    function roll(angle) {
+        cameraRoll += angle;
     }
 
     return {
@@ -591,5 +675,9 @@ var graphics = (function() {
         clear: clear,
 
         setBackground: setBackground,
+
+        pitch: pitch,
+        yaw: yaw,
+        roll: roll,
     };
 }());
