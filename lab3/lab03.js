@@ -6,7 +6,7 @@ var userHandler = (function() {
     var mouseX;
     var mouseY;
 
-    const deltaAngle = 0.05;
+    const deltaAngle = 0.02;
 
     // *** INITIALIZATION ***
     // Initialization function for user handler
@@ -190,9 +190,21 @@ var graphics = (function() {
         gl.enable(gl.DEPTH_TEST);
 
         // Initialize shape buffers
-        initCube(1);
-        initSphere(1, 32, 32);
-        initCylinder(1, 0.5, 1, 32, 2);
+        cubeBuffs = initCube(1);
+        cubeVertexBuff = cubeBuffs.vertexBuff;
+        cubeColorBuffAll = cubeBuffs.colorBuff;
+        cubeIndexBuff = cubeBuffs.indexBuff;
+
+        sphereBuffs = initSphere(1, 32, 32);
+        sphereVertexBuff = sphereBuffs.vertexBuff;
+        sphereColorBuffAll = sphereBuffs.colorBuff;
+        sphereIndexBuff = sphereBuffs.indexBuff;
+
+        cylBuffs = initCylinder(1, 0.5, 1, 32, 2);
+        cylVertexBuff = cylBuffs.vertexBuff;
+        cylColorBuffAll = cylBuffs.colorBuff;
+        cylIndexBuff = cylBuffs.indexBuff;
+
         initScene();
 
         // Initial draw
@@ -295,11 +307,11 @@ var graphics = (function() {
         }
         vertices.push(0, height / 2.0, 0);
         vertices = new Float32Array(vertices);
-        cylVertexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cylVertexBuff);
+        vertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        cylVertexBuff.itemSize = 3;
-        cylVertexBuff.numItems = 2 + vSlices * hSlices;
+        vertexBuff.itemSize = 3;
+        vertexBuff.numItems = 2 + vSlices * hSlices;
 
         // Init colors
         var colors = [
@@ -312,11 +324,11 @@ var graphics = (function() {
             colorsAll.push(...colors[i % 3]);
         }
         colorsAll = new Float32Array(colorsAll);
-        cylColorBuffAll = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cylColorBuffAll);
+        colorBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
         gl.bufferData(gl.ARRAY_BUFFER, colorsAll, gl.STATIC_DRAW);
-        cylColorBuffAll.itemSize = 4;
-        cylColorBuffAll.numItems = 2 + vSlices * hSlices;
+        colorBuff.itemSize = 4;
+        colorBuff.numItems = 2 + vSlices * hSlices;
 
         // Init indices
         function indexer(h, v) {
@@ -348,15 +360,21 @@ var graphics = (function() {
             );
         }
         indices = new Uint16Array(indices);
-        cylIndexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cylIndexBuff);
+        indexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
         gl.bufferData(
             gl.ELEMENT_ARRAY_BUFFER,
             indices,
             gl.STATIC_DRAW
         );
-        cylIndexBuff.itemSize = 1;
-        cylIndexBuff.numItems = 2*3*vSlices + 6*(hSlices-1)*vSlices;
+        indexBuff.itemSize = 1;
+        indexBuff.numItems = 2*3*vSlices + 6*(hSlices-1)*vSlices;
+
+        return {
+            vertexBuff: vertexBuff,
+            colorBuff : colorBuff,
+            indexBuff : indexBuff
+        }
     }
 
     function initSphere(scale, vSlices, hSlices) {
@@ -375,11 +393,11 @@ var graphics = (function() {
         vertices = new Float32Array(
             vertices.map(function(v) { return v * scale; })
         );
-        sphereVertexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexBuff);
+        vertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        sphereVertexBuff.itemSize = 3;
-        sphereVertexBuff.numItems = 2 + vSlices * hSlices;
+        vertexBuff.itemSize = 3;
+        vertexBuff.numItems = 2 + vSlices * hSlices;
         
         // Init colors
         var colors = [
@@ -392,15 +410,15 @@ var graphics = (function() {
             colorsAll.push(...colors[i % 3]);
         }
         colorsAll = new Float32Array(colorsAll);
-        sphereColorBuffAll = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, sphereColorBuffAll);
+        colorBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
         gl.bufferData(
             gl.ARRAY_BUFFER,
             colorsAll,
             gl.STATIC_DRAW
         );
-        sphereColorBuffAll.itemSize = 4;
-        sphereColorBuffAll.numItems = 2 + vSlices * hSlices;
+        colorBuff.itemSize = 4;
+        colorBuff.numItems = 2 + vSlices * hSlices;
 
         // Init indices
         function indexer(h, v) {
@@ -431,15 +449,21 @@ var graphics = (function() {
                 indexer(hSlices    , 0         )
             );
         }
-        sphereIndexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereIndexBuff);
+        indexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
         gl.bufferData(
             gl.ELEMENT_ARRAY_BUFFER,
             new Uint16Array(indices),
             gl.STATIC_DRAW
         );
-        sphereIndexBuff.itemSize = 1;
-        sphereIndexBuff.numItems = 2*3*vSlices + 6*(hSlices-1)*vSlices;
+        indexBuff.itemSize = 1;
+        indexBuff.numItems = 2*3*vSlices + 6*(hSlices-1)*vSlices;
+
+        return {
+            vertexBuff: vertexBuff,
+            colorBuff : colorBuff,
+            indexBuff : indexBuff
+        }
     }
 
     function initCube(scale) {
@@ -455,11 +479,11 @@ var graphics = (function() {
             ,-1, -1, -1 ]
         );
         vertices = vertices.map(function(v) { return v * scale; });
-        cubeVertexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexBuff);
+        vertexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-        cubeVertexBuff.itemSize = 3;
-        cubeVertexBuff.numItems = 8;
+        vertexBuff.itemSize = 3;
+        vertexBuff.numItems = 8;
 
         // Init colors
         var colorsAll = new Float32Array(
@@ -472,11 +496,11 @@ var graphics = (function() {
             , 1, 0, 0, 1
             , 0, 1, 0, 1 ]
         );
-        cubeColorBuffAll = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeColorBuffAll);
+        colorBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
         gl.bufferData(gl.ARRAY_BUFFER, colorsAll, gl.STATIC_DRAW);
-        cubeColorBuffAll.itemSize = 4;
-        cubeColorBuffAll.numItems = 8;
+        colorBuff.itemSize = 4;
+        colorBuff.numItems = 8;
 
         // Init indices
         var indices = new Uint16Array(
@@ -493,11 +517,17 @@ var graphics = (function() {
             , 2, 6, 3
             , 6, 7, 3 ]
         );
-        cubeIndexBuff = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIndexBuff);
+        indexBuff = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-        cubeIndexBuff.itemSize = 1;
-        cubeIndexBuff.numItems = 36;
+        indexBuff.itemSize = 1;
+        indexBuff.numItems = 36;
+
+        return {
+            vertexBuff: vertexBuff,
+            colorBuff : colorBuff,
+            indexBuff : indexBuff
+        }
     }
 
     // Draws a single shape
