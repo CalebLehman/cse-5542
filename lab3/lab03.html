@@ -33,13 +33,11 @@
         }
     </script>
     
-    <!-- scripts -->
     <script type="text/javascript" src="setup_shaders.js"></script>
-    <script type="text/javascript" src="lab03.js"></script>
-    <script type="text/javascript" src="gl-matrix-min.js"></script>
 </head>
 
-<body onload="graphics.init(); userHandler.init();">
+<!--body onload="graphics.init(); userHandler.init();"-->
+<body>
     <div style="float:left; padding-right:20px;">
     <canvas id="canvas" style="border:2px solid #000000;" width="500" height="500"></canvas><br/>
     </div>
@@ -57,6 +55,8 @@
     <h2>Usage:</h2>
     <p>Full usage is documented in <a href="README.md">README</a></p>
 
+    <script type="module" src="lab03.mjs"></script>
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
 </body>
 
 </html>

@@ -6,6 +6,8 @@ TODO
 
 ## Files
 
+TODO
+
   - `lab03.html`: Main HTML page
   - `setup_shaders.js`: Shader setup, written by Prof. Shen
   - `lab03.js`: Javascript for all other functionality
