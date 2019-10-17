@@ -14,7 +14,7 @@ to see a (very) simple ANIMATED version of the scene.
 If you open `lab03.html` with your browser and the
 plane object loads into the canvas, then you can ignore
 this note. If it does not load (blank white canvas),
-please see the note at the bottom of this README.
+please see [the note](#bug-note) at the bottom of this README.
 
 ## Hierarchy diagram for plane scene
 
@@ -23,6 +23,7 @@ shape) are marked with (E) after the name.
 
 NOTE that there are the required 3 levels of hierarchy.
 
+```
 +-Floor
 
 +-Root (E)
@@ -54,6 +55,7 @@ NOTE that there are the required 3 levels of hierarchy.
       +-Axel
       |
       +-Wheels
+```
 
 ## Files
 
