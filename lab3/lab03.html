@@ -12,24 +12,33 @@
     <script id="frag-shader" type="x-shader/x-fragment">
         precision mediump float;
         varying vec4 vColor;
+        varying vec3 vNormal;
+
+        uniform vec3 lightAway;
 
         void main(void) {
+            vec3 normal = normalize(vNormal);
             gl_FragColor = vColor;
+            gl_FragColor.rgb *= dot(normal, lightAway);
         }
     </script>
     <!-- vertex shader -->
     <script id="vertex-shader" type="x-shader/x-vertex">
         attribute vec3 position;
+        attribute vec3 normal;
         attribute vec4 color;
         varying vec4 vColor;
+        varying vec3 vNormal;
 
         uniform mat4 pvmMatrix;
+        uniform mat4 mMatrix;
         
         void main(void) {
             gl_PointSize = 2.0;
 
             gl_Position = pvmMatrix * vec4(position, 1.0);
-            vColor = color;
+            vColor  = color;
+            vNormal = mat3(mMatrix) * normal;
         }
     </script>
     

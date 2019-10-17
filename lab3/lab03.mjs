@@ -1,21 +1,25 @@
 // Author - Caleb Lehman (lehman.346)
 // Date   - TODO
 
-import { makeCube, makeSphere, makeCylinder }
-    from "./make_buffers.mjs"
 import { Node }
     from "./node.mjs"
 import { Shape }
     from "./shape.mjs"
 import { makePlaneScene }
-    from "./plane.mjs"
+    from "./plane_hierarchy.mjs"
 
 var userHandler = (function() {
     // *** VARIABLES ***
     var mouseX;
     var mouseY;
 
-    const deltaAngle = 0.02;
+    const deltaAngle = 0.04;
+    const deltaMove  = 0.08;
+
+    const propAngle = 0.15;
+    const finAngle  = 0.15;
+    const legAngle  = 0.10;
+    const wheelAngle = 0.15;
 
     // *** INITIALIZATION ***
     // Initialization function for user handler
@@ -39,7 +43,7 @@ var userHandler = (function() {
             // Command keys
             // TODO
 
-            case 68: // "c"
+            case 67: // "c"
                 graphics.clear();
                 break;
             case 80: // "p"
@@ -63,6 +67,55 @@ var userHandler = (function() {
                     graphics.roll(-deltaAngle);
                 }
                 break;
+
+            case 87: // "w"
+                graphics.moveRoot([0,0,-deltaMove]);
+                break;
+            case 83: // "s"
+                graphics.moveRoot([0,0,+deltaMove]);
+                break;
+            case 65: // "a"
+                graphics.moveRoot([-deltaMove,0,0]);
+                break;
+            case 68: // "d"
+                graphics.moveRoot([+deltaMove,0,0]);
+                break;
+            case 69: // "e"
+                graphics.moveRoot([0,+deltaMove,0]);
+                break;
+            case 81: // "q"
+                graphics.moveRoot([0,-deltaMove,0]);
+                break;
+
+            case 72: // "h"
+                if (event.shiftKey) {
+                    graphics.rotateProp(+propAngle);
+                } else {
+                    graphics.rotateProp(-propAngle);
+                }
+                break;
+            case 74: // "j"
+                if (event.shiftKey) {
+                    graphics.rotateFin(+finAngle);
+                } else {
+                    graphics.rotateFin(-finAngle);
+                }
+                break;
+            case 75: // "k"
+                if (event.shiftKey) {
+                    graphics.rotateLegs(+legAngle);
+                } else {
+                    graphics.rotateLegs(-legAngle);
+                }
+                break;
+            case 76: // "l"
+                if (event.shiftKey) {
+                    graphics.rotateWheels(+wheelAngle);
+                } else {
+                    graphics.rotateWheels(-wheelAngle);
+                }
+                break;
+            
         }
         graphics.drawScene();
     }
@@ -115,8 +168,8 @@ var graphics = (function() {
     var shaderProgram;
 
     // Initial camera parameters
-    const cameraPosition = [2, 2, 5];
-    const cameraCOI      = [0, 0, 0];
+    const cameraPosition = [-5, 3, -2];
+    const cameraCOI      = [0, 1, 1];
     const cameraUp       = [0, 1, 0];
     var   cameraPitch    = 0.0;
     var   cameraYaw      = 0.0;
@@ -124,12 +177,20 @@ var graphics = (function() {
 
     // Current list of shapes to draw
     var root;
+    var propRoot;
+    var finRoot;
+    const finBound  = 0.4;
+    var legRoot;
+    const legBound  = 0.36;
+    var floor;
+    var wheelRoot;
     var clrColor;
 
     // Buffers for each shape type
     var vertexBuffs = new Object();
     var colorBuffs  = new Object();
     var indexBuffs  = new Object();
+    var normalBuffs = new Object();
 
     // *** INITIALIZATION ***
     // Initialize WebGL context and set up shaders
@@ -150,15 +211,27 @@ var graphics = (function() {
         gl.enableVertexAttribArray(
             shaderProgram.vertexPositionAttribute
         );
+        // Vertex normal attribute
+        shaderProgram.vertexNormalAttribute =
+            gl.getAttribLocation(shaderProgram, "normal");
+        gl.enableVertexAttribArray(
+            shaderProgram.vertexNormalAttribute
+        );
         // Vertex color attribute
         shaderProgram.vertexColorAttribute =
             gl.getAttribLocation(shaderProgram, "color");
         gl.enableVertexAttribArray(
             shaderProgram.vertexColorAttribute
         );
-        // Transformation matrix uniform
+        // Transformation matrices uniforms
         shaderProgram.pvmMatrix =
             gl.getUniformLocation(shaderProgram, "pvmMatrix");
+        shaderProgram.mMatrix =
+            gl.getUniformLocation(shaderProgram, "mMatrix");
+        // Light away direction uniform
+        shaderProgram.lightAway =
+            gl.getUniformLocation(shaderProgram, "lightAway");
+
         gl.enable(gl.DEPTH_TEST);
 
         initScene();
@@ -168,13 +241,20 @@ var graphics = (function() {
     }
 
     function initScene() {
-        root = makePlaneScene(gl);
+        var roots = makePlaneScene(gl);
+        root = roots.rootNode;
+        propRoot = roots.propNode;
+        finRoot = roots.finNode;
+        legRoot = roots.legNode;
+        floor = roots.floorNode;
+        wheelRoot = roots.wheelNode;
     }
 
     function addBuffers(type, buffs) {
         vertexBuffs[type] = buffs.vertexBuff;
         colorBuffs [type] = buffs.colorBuff;
         indexBuffs [type] = buffs.indexBuff;
+        normalBuffs[type] = buffs.normalBuff;
     }
 
     // Draws a single shape
@@ -185,11 +265,22 @@ var graphics = (function() {
         var vertexBuff = vertexBuffs[shape.type];
         var indexBuff  = indexBuffs [shape.type];
         var colorBuff  = colorBuffs [shape.type];
+        var normalBuff = normalBuffs[shape.type];
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.vertexAttribPointer(
             shaderProgram.vertexPositionAttribute,
             vertexBuff.itemSize,
+            gl.FLOAT,
+            false,
+            0,
+            0
+        );
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuff);
+        gl.vertexAttribPointer(
+            shaderProgram.vertexNormalAttribute,
+            normalBuff.itemSize,
             gl.FLOAT,
             false,
             0,
@@ -210,16 +301,23 @@ var graphics = (function() {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
 
         // Bind transformation
+        var mMatrix = mat4.clone(mMatrix);
+        mat4.translate(mMatrix, mMatrix, shape.trans);
+        mat4.rotate(   mMatrix, mMatrix, shape.rot.angle, shape.rot.axis);
+        mat4.scale(    mMatrix, mMatrix, shape.scale);
+
         var pvmMatrix = mat4.create();
         mat4.multiply(pvmMatrix, pvMatrix, mMatrix);
-        mat4.translate(pvmMatrix, pvmMatrix, shape.trans);
-        mat4.rotate(   pvmMatrix, pvmMatrix, shape.rot.angle, shape.rot.axis);
-        mat4.scale(    pvmMatrix, pvmMatrix, shape.scale);
 
         gl.uniformMatrix4fv(
             shaderProgram.pvmMatrix,
             false,
             pvmMatrix
+        );
+        gl.uniformMatrix4fv(
+            shaderProgram.mMatrix,
+            false,
+            mMatrix
         );
 
         // Draw
@@ -244,6 +342,11 @@ var graphics = (function() {
             clrColor[3]
         );
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        // Set light away direction
+        var lightAway = vec3.create();
+        vec3.normalize(lightAway, vec3.fromValues(cameraPosition[0], cameraPosition[1], cameraPosition[2]));
+        gl.uniform3fv(shaderProgram.lightAway, lightAway);
 
         // Generate perpective-view matrix
         var pMatrix = mat4.create();
@@ -288,11 +391,21 @@ var graphics = (function() {
             // push children
             stack.push(...node.children);
         }
+
+        drawShape(floor.shape, pvMatrix, mat4.create());
     }
 
     // Clear all graphics data
     function clear() {
-        clrColor = [1, 1, 1, 1];
+        clrColor = [0.7, 0.8, 1, 1];
+        cameraPitch = 0.0;
+        cameraYaw   = 0.0;
+        cameraRoll  = 0.0;
+        if (root) {
+            root.trans = [0, 1.5, 0];
+            propRoot.rot.angle = 0.0;
+            finRoot.rot.angle = 0.0;
+        }
     }
 
     // Choose different background color
@@ -312,6 +425,40 @@ var graphics = (function() {
         cameraRoll += angle;
     }
 
+    function moveRoot(dist) {
+        root.trans[0] += dist[0];
+        root.trans[1] += dist[1];
+        root.trans[2] += dist[2];
+    }
+
+    function rotateProp(angle) {
+        propRoot.rot.angle += angle;
+    }
+
+    function rotateFin(angle) {
+        finRoot.rot.angle += angle;
+        if (finRoot.rot.angle > +finBound) {
+            finRoot.rot.angle = +finBound;
+        }
+        if (finRoot.rot.angle < -finBound) {
+            finRoot.rot.angle = -finBound;
+        }
+    }
+
+    function rotateLegs(angle) {
+        legRoot.rot.angle += angle;
+        if (legRoot.rot.angle > +legBound) {
+            legRoot.rot.angle = +legBound;
+        }
+        if (legRoot.rot.angle < -legBound) {
+            legRoot.rot.angle = -legBound;
+        }
+    }
+
+    function rotateWheels(angle) {
+        wheelRoot.rot.angle += angle;
+    }
+
     return {
         init: init,
 
@@ -325,6 +472,11 @@ var graphics = (function() {
         pitch: pitch,
         yaw: yaw,
         roll: roll,
+        moveRoot: moveRoot,
+        rotateProp: rotateProp,
+        rotateFin: rotateFin,
+        rotateLegs: rotateLegs,
+        rotateWheels: rotateWheels,
     };
 }());
 
