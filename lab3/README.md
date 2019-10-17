@@ -9,6 +9,13 @@ From the main HTML page, you can control various aspects
 of the scene MANUALLY. You can also follow the link
 to see a (very) simple ANIMATED version of the scene.
 
+## IMPORTANT NOTE FOR GRADER
+
+If you open `lab03.html` with your browser and the
+plane object loads into the canvas, then you can ignore
+this note. If it does not load (blank white canvas),
+please see the note at the bottom of this README.
+
 ## Hierarchy diagram for plane scene
 
 Empty nodes (place-holder nodes with no associated
@@ -63,6 +70,8 @@ NOTE that there are the required 3 levels of hierarchy.
   - `shape.mjs`: Javascript module for shape class used to encapsulate shape types
   - `gl-matrix-min.js`: Javascript which defines the glMatrix library
   - `src`: Directory with Javascript files implementing glMatrix
+  - `lab03_no_modules`: Directory with a module-less version of this
+    project (see [bug note](#bug-note) at bottom of this document)
 
 ## Usage
 
@@ -102,4 +111,18 @@ The lab assignment had no specific bonus assigned.
 
 ## Testing
 
-This lab was tested on Windows 10 in a Chrome browser.
+This lab was tested on Windows 10 with Chrome and Microsoft Edge browsers.
+
+## Bug note
+
+This lab was tested on Firefox, where it did not work. I believe the error
+has to do with CORS/same-origin policy. In any case, there are two options
+to fix it:
+
+  1) Instead of opening the HTML pages as local pages, launch through
+     local HTTP server. In particular, from the top directory of this
+     project, you can run `python -m SimpleHTTPServer 8080` or
+     `python3 -m http.server 8080` and then direct your browser
+     to `localhost:8080`
+  2) Navigate to the `lab03_no_modules/` directory and open
+     the `lab03.html` file there

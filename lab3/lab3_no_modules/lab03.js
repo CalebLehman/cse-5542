@@ -1,13 +1,6 @@
 // Author - Caleb Lehman (lehman.346)
 // Date   - 10/17/2019
 
-import { Node }
-    from "./node.mjs"
-import { Shape }
-    from "./shape.mjs"
-import { makePlaneScene }
-    from "./plane_hierarchy.mjs"
-
 var userHandler = (function() {
     // *** VARIABLES ***
     var mouseX;
@@ -556,5 +549,3 @@ var graphics = (function() {
         rotateWheels: rotateWheels,
     };
 }());
-
-export { graphics, userHandler };

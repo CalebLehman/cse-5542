@@ -1,0 +1,103 @@
+<!-- Author - Caleb Lehman (lehman.346) -->
+<!-- Date   - 10/17/2019                -->
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Lab 03 Caleb Lehman (.346)</title>
+    
+    <!-- fragment shader -->
+    <script id="frag-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 vColor;
+        varying vec3 vNormal;
+
+        uniform vec3 lightAway;
+
+        void main(void) {
+            vec3 normal = normalize(vNormal);
+            gl_FragColor = vColor;
+            gl_FragColor.rgb *= dot(normal, lightAway);
+        }
+    </script>
+    <!-- vertex shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec3 position;
+        attribute vec3 normal;
+        attribute vec4 color;
+        varying vec4 vColor;
+        varying vec3 vNormal;
+
+        uniform mat4 pvmMatrix;
+        uniform mat4 mMatrix;
+        
+        void main(void) {
+            gl_PointSize = 2.0;
+
+            gl_Position = pvmMatrix * vec4(position, 1.0);
+            vColor  = color;
+            vNormal = mat3(mMatrix) * normal;
+        }
+    </script>
+    
+    <script type="text/javascript" src="setup_shaders.js"></script>
+</head>
+
+<!--body onload="graphics.init(); userHandler.init();"-->
+<body>
+    <h3>Toy Plane (3D WebGL and hierarchical modeling)</h3>
+    <h4>CSE 5542 Lab 3</h4>
+    <div style="float:left; padding-right:20px;">
+    <canvas id="canvas" style="border:2px solid #000000;" width="500" height="500"></canvas><br/>
+    </div>
+
+    <div style="float:left">
+
+    <h4>Control Reminders:</h4>
+    <p><code>c</code>: Reset</p>
+    <h5>Plane movement</h5>
+    <ul>
+        <li><code>w/s</code>: Move the plane foward and backward (relative to its local coordinates)</li>
+        <li><code>a/d</code>: Move the plane left and right (relative to its local coordinates)</li>
+        <li><code>q/e</code>: Move the plane down and up (relative to its local coordinates)</li>
+    </ul>
+    <h5>Camera adjustment (all relative to camera frame)</h5>
+    <ul>
+        <li><code>R/r</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">roll</a> of the camera</li>
+        <li><code>P/p</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">pitch</a> of the camera</li>
+        <li><code>Y/y</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">yaw</a> of the camera</li>
+    </ul>
+    <h5>Misc. movements</h5>
+    <ul>
+        <li><code>H/h</code>: Rotate the propeller</li>
+        <li><code>J/j</code>: Rotate the back fin</li>
+        <li><code>K/k</code>: Rotate the legs</li>
+        <li><code>L/l</code>: Rotate the wheels</li>
+    </ul>
+    </div>
+
+    <div style="float:left">
+    <h4>Animated Version</h4>
+    <p>An <a href="lab03_anim.html">animated version</a> without manual controls</p>
+    </div>
+
+    <br style="clear:both" />
+
+    <h2>Usage:</h2>
+    <p>Full usage is documented in <a href="README.md">README</a></p>
+
+    <script type="text/javascript" src="gl-matrix-min.js"></script>
+    <script type="text/javascript" src="node.js"></script>
+    <script type="text/javascript" src="shape.js"></script>
+    <script type="text/javascript" src="plane_buffers.js"></script>
+    <script type="text/javascript" src="plane_hierarchy.js"></script>
+    <script type="text/javascript" src="lab03.js"></script>
+    <script type="text/javascript">
+        graphics.init();
+        userHandler.init();
+    </script>
+</body>
+
+</html>
