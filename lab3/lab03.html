@@ -47,16 +47,40 @@
 
 <!--body onload="graphics.init(); userHandler.init();"-->
 <body>
+    <h3>Toy Plane (3D WebGL and hierarcichal modelling)</h3>
+    <h4>CSE 5542 Lab 3</h4>
     <div style="float:left; padding-right:20px;">
     <canvas id="canvas" style="border:2px solid #000000;" width="500" height="500"></canvas><br/>
     </div>
 
     <div style="float:left">
 
-    <h4>Useful Reminders:</h4>
+    <h4>Control Reminders:</h4>
+    <p><code>c</code>: Reset</p>
+    <h5>Plane movement</h5>
     <ul>
-        <li>TODO</li>
+        <li><code>w/s</code>: Move the plane foward and backward (relative to its local coordinates)</li>
+        <li><code>a/d</code>: Move the plane left and right (relative to its local coordinates)</li>
+        <li><code>q/e</code>: Move the plane down and up (relative to its local coordinates)</li>
     </ul>
+    <h5>Camera adjustment (all relative to camera frame)</h5>
+    <ul>
+        <li><code>R/r</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">roll</a> of the camera</li>
+        <li><code>P/p</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">pitch</a> of the camera</li>
+        <li><code>Y/y</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">yaw</a> of the camera</li>
+    </ul>
+    <h5>Misc. movements</h5>
+    <ul>
+        <li><code>H/h</code>: Rotate the propeller</li>
+        <li><code>J/j</code>: Rotate the back fin</li>
+        <li><code>K/k</code>: Rotate the legs</li>
+        <li><code>L/l</code>: Rotate the wheels</li>
+    </ul>
+    </div>
+
+    <div style="float:left">
+    <h4>Animated Version</h4>
+    <p>An <a href="lab03_anim.html">animated version</a> without manual controls</p>
     </div>
 
     <br style="clear:both" />
@@ -65,6 +89,12 @@
     <p>Full usage is documented in <a href="README.md">README</a></p>
 
     <script type="module" src="lab03.mjs"></script>
+    <script type="module">
+        import { graphics, userHandler }
+            from "./lab03.mjs"
+        graphics.init();
+        userHandler.init();
+    </script>
     <script type="text/javascript" src="gl-matrix-min.js"></script>
 </body>
 

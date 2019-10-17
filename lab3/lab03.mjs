@@ -20,6 +20,7 @@ var userHandler = (function() {
     const finAngle  = 0.15;
     const legAngle  = 0.10;
     const wheelAngle = 0.15;
+    var animLoops = [];
 
     // *** INITIALIZATION ***
     // Initialization function for user handler
@@ -34,6 +35,59 @@ var userHandler = (function() {
             userMouseDown,
             false
         );
+    }
+
+    function initAnim() {
+        // Propeller
+        animLoops.push(setInterval(
+            function() {
+                graphics.rotateProp(propAngle);
+                graphics.drawScene();
+            },
+            20
+        ));
+
+        // Movement
+        graphics.setRoot([0, 1.5, 10]);
+        graphics.setRotRoot(0.2);
+        graphics.rotateFin(-0.2);
+        var vertSpeed = 0;
+        var rotSpeed = 0;
+        var camSpeed = 0;
+        animLoops.push(setInterval(
+            function() {
+                graphics.moveRoot([0, 0, -deltaMove]);
+
+                graphics.moveRoot([0, vertSpeed, 0]);
+                vertSpeed += 0.0002;
+
+                graphics.rotRoot(rotSpeed);
+                rotSpeed += 0.00002;
+
+                graphics.pitch(-camSpeed);
+                graphics.yaw(-camSpeed*1.3);
+                camSpeed += 0.00002;
+
+                graphics.drawScene();
+            },
+            20
+        ));
+        animLoops.push(setInterval(
+            function() {
+                graphics.setRoot([0, 1.5, 10]);
+                graphics.setRotRoot(0.2);
+
+                vertSpeed = 0;
+                rotSpeed = 0;
+
+                graphics.setPitch(0);
+                graphics.setYaw(0);
+                camSpeed = 0;
+
+                graphics.drawScene();
+            },
+            4000,
+        ));
     }
 
     // *** HANDLERS ***
@@ -158,7 +212,8 @@ var userHandler = (function() {
 
     return {
         // *** PUBLIC ***
-        init: init
+        init: init,
+        initAnim: initAnim
     };
 }());
 
@@ -417,8 +472,16 @@ var graphics = (function() {
         cameraPitch += angle;
     }
 
+    function setPitch(angle) {
+        cameraPitch = angle;
+    }
+
     function yaw(angle) {
         cameraYaw += angle;
+    }
+
+    function setYaw(angle) {
+        cameraYaw = angle;
     }
 
     function roll(angle) {
@@ -429,6 +492,18 @@ var graphics = (function() {
         root.trans[0] += dist[0];
         root.trans[1] += dist[1];
         root.trans[2] += dist[2];
+    }
+
+    function setRoot(pos) {
+        root.trans = pos;
+    }
+
+    function rotRoot(angle) {
+        root.rot.angle += angle;
+    }
+
+    function setRotRoot(angle) {
+        root.rot.angle = angle;
     }
 
     function rotateProp(angle) {
@@ -470,9 +545,14 @@ var graphics = (function() {
         setBackground: setBackground,
 
         pitch: pitch,
+        setPitch: setPitch,
         yaw: yaw,
+        setYaw: setYaw,
         roll: roll,
         moveRoot: moveRoot,
+        setRoot: setRoot,
+        rotRoot: rotRoot,
+        setRotRoot: setRotRoot,
         rotateProp: rotateProp,
         rotateFin: rotateFin,
         rotateLegs: rotateLegs,
@@ -480,7 +560,9 @@ var graphics = (function() {
     };
 }());
 
+/*
 graphics.init();
 userHandler.init();
+*/
 
-export { graphics };
+export { graphics, userHandler };
