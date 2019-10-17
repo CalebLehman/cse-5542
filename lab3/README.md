@@ -113,13 +113,19 @@ The lab assignment had no specific bonus assigned.
 
 ## Testing
 
-This lab was tested on Windows 10 with Chrome and Microsoft Edge browsers.
+This lab was tested on Windows 10 with Chrome, Firefox, and Microsoft Edge browsers.
+See [the note](#bug-note) at the bottom of this document if the project
+doesn't appear to be working.
 
 ## Bug note
 
-This lab was tested on Firefox, where it did not work. I believe the error
-has to do with CORS/same-origin policy. In any case, there are two options
-to fix it:
+This lab was developed using a local HTTP server, with which it works on all
+tested browsers. When launched as a local HTML file however, it only worked
+on Microsoft Edge.
+
+If you are having issues with the graphics loading, I believe it to
+be related to CORS/same-origin policy. There are (at least) two options 
+to get the project working:
 
   1) Instead of opening the HTML pages as local pages, launch through
      local HTTP server. In particular, from the top directory of this
