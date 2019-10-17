@@ -1,6 +1,7 @@
 # CSE 5542 - Lab 3 - Caleb Lehman (.346)
 
 Submission for Lab 3 of Prof. Shen's CSE 5542 course.
+Contact [Caleb Lehman](mailto:lehman.346@osu.edu) with issues.
 
 Scene for a toy plane, built using 3D WebGL and
 hierarchical modeling techniques.
