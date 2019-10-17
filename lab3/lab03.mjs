@@ -1,5 +1,5 @@
 // Author - Caleb Lehman (lehman.346)
-// Date   - TODO
+// Date   - 10/17/2019
 
 import { Node }
     from "./node.mjs"
@@ -94,9 +94,6 @@ var userHandler = (function() {
     // Process user key inputs
     function userKeyDown(event) {
         switch (event.keyCode) {
-            // Command keys
-            // TODO
-
             case 67: // "c"
                 graphics.clear();
                 break;
