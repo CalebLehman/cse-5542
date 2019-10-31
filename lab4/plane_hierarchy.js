@@ -32,9 +32,9 @@ function makeShapes(gl) {
     );
 
     shapes["head"] = new Shape("head", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
-    graphics.addBuffers("head", makeCylinder(gl, headBot, headTop, headLen, 32, 2));
+    graphics.addBuffers("head", makeCylinder(gl, headBot, headTop, headLen, 64, 2));
     shapes["body"] = new Shape("body", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
-    graphics.addBuffers("body", makeCylinder(gl, bodyBot, bodyTop, bodyLen, 32, 2));
+    graphics.addBuffers("body", makeCylinder(gl, bodyBot, bodyTop, bodyLen, 64, 2));
 
     graphics.addBuffers("cube", makeCube(gl, 1));
     shapes["wing"] = new Shape("cube", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [wingLen / 2, 0.05, 0.5]);
@@ -45,14 +45,14 @@ function makeShapes(gl) {
     graphics.addBuffers("floor", makeFloor(gl, 1));
     shapes["floor"] = new Shape("floor", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [5, 0.01, 5]);
 
-    graphics.addBuffers("sphere", makeSphere(gl, 1, 32, 32));
+    graphics.addBuffers("sphere", makeSphere(gl, 1, 64, 64));
     shapes["cockpit"] = new Shape("sphere", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.375, 0.5, 0.75]);
     shapes["rotor"] = new Shape("sphere", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.25, 0.25, 0.25]);
 
-    graphics.addBuffers("wheel", makeWheel(gl, 1, 32, 32));
+    graphics.addBuffers("wheel", makeWheel(gl, 1, 64, 64));
     shapes["wheel"] = new Shape("wheel", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.15, 0.25, 0.25]);
 
-    graphics.addBuffers("axel", makeCylinder(gl, 0.1, 0.1, 1, 32, 2));
+    graphics.addBuffers("axel", makeCylinder(gl, 0.1, 0.1, 1, 64, 2));
     shapes["axel"] = new Shape("axel", [0, 0, 0], {angle: 1.57, axis: [0, 0, 1]}, [1, 1, 1]);
 }
 

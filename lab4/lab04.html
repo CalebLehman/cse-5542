@@ -11,34 +11,78 @@
     <!-- fragment shader -->
     <script id="frag-shader" type="x-shader/x-fragment">
         precision mediump float;
-        varying vec4 vColor;
-        varying vec3 vNormal;
 
-        uniform vec3 lightAway;
+        varying vec3 fragPosEye;
+        varying vec3 fragLightEye;
+        varying vec3 fragNormalEye;
+
+        uniform vec3 lightAmbient;
+        uniform vec3 lightDiffuse;
+        uniform vec3 lightSpecular;
+
+        varying vec3 materialAmbient;
+        varying vec3 materialDiffuse;
+        varying vec3 materialSpecular;
+        varying float materialShine;
 
         void main(void) {
-            vec3 normal = normalize(vNormal);
-            gl_FragColor = vColor;
-            gl_FragColor.rgb *= dot(normal, lightAway);
+            vec3 L = normalize(fragLightEye - fragPosEye);
+            vec3 N = normalize(fragNormalEye);
+            vec3 R = reflect(-L, N);
+            vec3 V = normalize(-fragPosEye);
+
+            gl_FragColor = vec4(
+                materialAmbient * lightAmbient
+                + materialDiffuse * lightDiffuse * max(0.0, dot(N, L))
+                + materialSpecular * lightSpecular * pow(max(0.0, dot(R, V)), materialShine),
+                1.0
+            );
         }
     </script>
     <!-- vertex shader -->
     <script id="vertex-shader" type="x-shader/x-vertex">
-        attribute vec3 position;
-        attribute vec3 normal;
-        attribute vec4 color;
-        varying vec4 vColor;
-        varying vec3 vNormal;
+        // Light position (in world space)
+        uniform vec3 lightPos;
 
+        // Vertex attributes (in model space)
+        attribute vec3  position;
+        attribute vec3  normal;
+        attribute vec3  kA;
+        attribute vec3  kD;
+        attribute vec3  kS;
+        attribute float n;
+
+        // Transformation matrices
         uniform mat4 pvmMatrix;
-        uniform mat4 mMatrix;
+        uniform mat4 vmMatrix;
+        uniform mat4 vMatrix;
+        uniform mat4 normalMatrix;
+
+        // Values for fragment shader
+        varying vec3 fragPosEye;
+        varying vec3 fragLightEye;
+        varying vec3 fragNormalEye;
         
+        varying vec3 materialAmbient;
+        varying vec3 materialDiffuse;
+        varying vec3 materialSpecular;
+        varying float materialShine;
+
         void main(void) {
             gl_PointSize = 2.0;
 
-            gl_Position = pvmMatrix * vec4(position, 1.0);
-            vColor  = color;
-            vNormal = mat3(mMatrix) * normal;
+            vec4 mPosition = vec4(position, 1.0);
+            vec4 mNormal   = vec4(normal, 0.0);
+
+            gl_Position   = pvmMatrix * mPosition;
+            fragPosEye    = vec3(vmMatrix * mPosition);
+            fragLightEye  = vec3(vMatrix * vec4(lightPos, 1.0));
+            fragNormalEye = vec3(normalMatrix * mNormal);
+
+            materialAmbient  = kA;
+            materialDiffuse  = kD;
+            materialSpecular = kS;
+            materialShine    = n;
         }
     </script>
     

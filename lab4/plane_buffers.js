@@ -1,42 +1,74 @@
+function plasticBuffers(gl, numVertices, color) {
+    // Create color arrays
+    var ambient  = [];
+    var diffuse  = [];
+    var specular = [];
+    var n        = [];
+    for (var i = 0; i < numVertices; ++i) {
+        ambient.push(...color);
+        diffuse.push(...color);
+        specular.push(1, 1, 1, 1);
+        n.push(100);
+    }
+    ambient  = new Float32Array(ambient);
+    diffuse  = new Float32Array(diffuse);
+    specular = new Float32Array(specular);
+    n        = new Float32Array(n);
+
+    // Create buffers and send
+    var ambBuff  = gl.createBuffer();
+    var diffBuff = gl.createBuffer();
+    var specBuff = gl.createBuffer();
+    var nBuff    = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, ambBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        ambient,
+        gl.STATIC_DRAW
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, diffBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        diffuse,
+        gl.STATIC_DRAW
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, specBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        specular,
+        gl.STATIC_DRAW
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, nBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        n,
+        gl.STATIC_DRAW
+    );
+    ambBuff.itemSize = 4;
+    ambBuff.numItems = ambient.length / ambBuff.itemSize;
+    diffBuff.itemSize = 4;
+    diffBuff.numItems = diffuse.length / diffBuff.itemSize;
+    specBuff.itemSize = 4;
+    specBuff.numItems = specular.length / specBuff.itemSize;
+    nBuff.itemSize = 1;
+    nBuff.numItems = n.length / nBuff.itemSize;
+
+    return {
+        ambBuff : ambBuff,
+        diffBuff: diffBuff,
+        specBuff: specBuff,
+        nBuff   : nBuff,
+    }
+}
+
 function makeFloor(gl, size) {
     var buffs = makeCube(gl, size);
-    var colors = new Float32Array(
-        [ 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
+    var plasticBuffs = plasticBuffers(gl, buffs.ambBuff.numItems, [0.7, 0.7, 0.7, 1]);
 
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1
-        , 0.7, 0.7, 0.7, 1 ]
-    );
-    var colorBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-    colorBuff.itemSize = 4;
-    colorBuff.numItems = colors.length / colorBuff.itemSize;
-    buffs.colorBuff = colorBuff;
+    buffs.ambBuff  = plasticBuffs.ambBuff;
+    buffs.diffBuff = plasticBuffs.diffBuff;
+    buffs.specBuff = plasticBuffs.specBuff;
+    buffs.nBuff    = plasticBuffs.nBuff;
     return buffs;
 }
 
@@ -81,42 +113,7 @@ function makeCube(gl, size) {
     vertexBuff.numItems = vertices.length / vertexBuff.itemSize;
 
     // Init colors
-    var colors = new Float32Array(
-        [ 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1
-        , 1, 0, 0, 1 ]
-    );
-    var colorBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-    colorBuff.itemSize = 4;
-    colorBuff.numItems = colors.length / colorBuff.itemSize;
+    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, [1, 0, 0, 1]);
 
     // Init indices
     var indices = new Uint16Array(
@@ -184,7 +181,10 @@ function makeCube(gl, size) {
 
     return {
         vertexBuff: vertexBuff,
-        colorBuff : colorBuff,
+        ambBuff   : plasticBuffs.ambBuff,
+        diffBuff  : plasticBuffs.diffBuff,
+        specBuff  : plasticBuffs.specBuff,
+        nBuff     : plasticBuffs.nBuff,
         indexBuff : indexBuff,
         normalBuff: normalBuff,
     }
@@ -199,21 +199,35 @@ function makeWheel(gl, radius, vSlices, hSlices) {
         [0, 0, 1, 1]
     ];
 
-    var colors = [];
-    for (var i = 0; i < buffs.colorBuff.numItems; ++i) {
-        colors.push(...availColors[Math.floor(i/2)%3]);
+    var ambient = [];
+    var diffuse = [];
+    for (var i = 0; i < buffs.ambBuff.numItems; ++i) {
+        ambient.push(...availColors[Math.floor(i/2)%3]);
+        diffuse.push(...availColors[Math.floor(i/2)%3]);
     }
-    colors = new Float32Array(colors);
-    var colorBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
+    ambient = new Float32Array(ambient);
+    diffuse = new Float32Array(diffuse);
+    var ambBuff  = gl.createBuffer();
+    var diffBuff = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, ambBuff);
     gl.bufferData(
         gl.ARRAY_BUFFER,
-        colors,
+        ambient,
         gl.STATIC_DRAW
     );
-    colorBuff.itemSize = 4;
-    colorBuff.numItems = colors.length / colorBuff.itemSize;
-    buffs.colorBuff = colorBuff;
+    gl.bindBuffer(gl.ARRAY_BUFFER, diffBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        diffuse,
+        gl.STATIC_DRAW
+    );
+    ambBuff.itemSize = 4;
+    ambBuff.numItems = ambient.length / ambBuff.itemSize;
+    diffBuff.itemSize = 4;
+    diffBuff.numItems = diffuse.length / diffBuff.itemSize;
+
+    buffs.ambBuff  = ambBuff;
+    buffs.diffBuff = diffBuff;
 
     return buffs;
 }
@@ -241,20 +255,7 @@ function makeSphere(gl, radius, vSlices, hSlices) {
     vertexBuff.numItems = vertices.length / vertexBuff.itemSize;
     
     // Init colors
-    var colors = [];
-    for (var i = 0; i < 2 + vSlices * hSlices; ++i) {
-        colors.push(0, 0, 1, 1);
-    }
-    colors = new Float32Array(colors);
-    var colorBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
-    gl.bufferData(
-        gl.ARRAY_BUFFER,
-        colors,
-        gl.STATIC_DRAW
-    );
-    colorBuff.itemSize = 4;
-    colorBuff.numItems = colors.length / colorBuff.itemSize;
+    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, [0, 0, 1, 1]);
 
     // Init indices
     function indexer(h, v) {
@@ -316,7 +317,10 @@ function makeSphere(gl, radius, vSlices, hSlices) {
 
     return {
         vertexBuff: vertexBuff,
-        colorBuff : colorBuff,
+        ambBuff   : plasticBuffs.ambBuff,
+        diffBuff  : plasticBuffs.diffBuff,
+        specBuff  : plasticBuffs.specBuff,
+        nBuff     : plasticBuffs.nBuff,
         indexBuff : indexBuff,
         normalBuff: normalBuff,
     }
@@ -356,16 +360,7 @@ function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
     vertexBuff.numItems = vertices.length / vertexBuff.itemSize;
 
     // Init colors
-    var colors = [];
-    for (var i = 0; i < vertices.length; ++i) {
-        colors.push(0, 1, 0, 1);
-    }
-    colors = new Float32Array(colors);
-    var colorBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
-    colorBuff.itemSize = 4;
-    colorBuff.numItems = colors.length / colorBuff.itemSize;
+    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, [0, 1, 0, 1]);
 
     // Init indices
     var indices = [];
@@ -434,7 +429,10 @@ function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
 
     return {
         vertexBuff: vertexBuff,
-        colorBuff : colorBuff,
+        ambBuff   : plasticBuffs.ambBuff,
+        diffBuff  : plasticBuffs.diffBuff,
+        specBuff  : plasticBuffs.specBuff,
+        nBuff     : plasticBuffs.nBuff,
         indexBuff : indexBuff,
         normalBuff: normalBuff,
     }

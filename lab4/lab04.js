@@ -220,6 +220,12 @@ var graphics = (function() {
     var   cameraYaw      = 0.0;
     var   cameraRoll     = 0.0;
 
+    // Light parameters
+    var lightPos = [-5, 5, -2];
+    const lightAmbient  = [.5, .5, .5];
+    const lightDiffuse  = [.5, .5, .5];
+    const lightSpecular = [1, 1, 1];
+
     // Current list of shapes to draw
     var root;
     var propRoot;
@@ -233,7 +239,10 @@ var graphics = (function() {
 
     // Buffers for each shape type
     var vertexBuffs = new Object();
-    var colorBuffs  = new Object();
+    var ambBuffs    = new Object();
+    var diffBuffs   = new Object();
+    var specBuffs   = new Object();
+    var nBuffs      = new Object();
     var indexBuffs  = new Object();
     var normalBuffs = new Object();
 
@@ -249,33 +258,56 @@ var graphics = (function() {
         gl.viewportHeight = canvas.height;
 
         // Set up shaders
+        // Uniforms
         shaderProgram = setup_shaders.initShaders(gl);
-        // Vertex position attribute
-        shaderProgram.vertexPositionAttribute =
-            gl.getAttribLocation(shaderProgram, "position");
-        gl.enableVertexAttribArray(
-            shaderProgram.vertexPositionAttribute
-        );
-        // Vertex normal attribute
-        shaderProgram.vertexNormalAttribute =
-            gl.getAttribLocation(shaderProgram, "normal");
-        gl.enableVertexAttribArray(
-            shaderProgram.vertexNormalAttribute
-        );
-        // Vertex color attribute
-        shaderProgram.vertexColorAttribute =
-            gl.getAttribLocation(shaderProgram, "color");
-        gl.enableVertexAttribArray(
-            shaderProgram.vertexColorAttribute
-        );
-        // Transformation matrices uniforms
+        shaderProgram.lightPos =
+            gl.getUniformLocation(shaderProgram, "lightPos");
+        shaderProgram.lightAmbient =
+            gl.getUniformLocation(shaderProgram, "lightAmbient");
+        shaderProgram.lightDiffuse =
+            gl.getUniformLocation(shaderProgram, "lightDiffuse");
+        shaderProgram.lightSpecular =
+            gl.getUniformLocation(shaderProgram, "lightSpecular");
         shaderProgram.pvmMatrix =
             gl.getUniformLocation(shaderProgram, "pvmMatrix");
-        shaderProgram.mMatrix =
-            gl.getUniformLocation(shaderProgram, "mMatrix");
-        // Light away direction uniform
-        shaderProgram.lightAway =
-            gl.getUniformLocation(shaderProgram, "lightAway");
+        shaderProgram.vmMatrix =
+            gl.getUniformLocation(shaderProgram, "vmMatrix");
+        shaderProgram.vMatrix =
+            gl.getUniformLocation(shaderProgram, "vMatrix");
+        shaderProgram.normalMatrix =
+            gl.getUniformLocation(shaderProgram, "normalMatrix");
+
+        // Attributes
+        shaderProgram.position =
+            gl.getAttribLocation(shaderProgram, "position");
+        gl.enableVertexAttribArray(
+            shaderProgram.position
+        );
+        shaderProgram.normal =
+            gl.getAttribLocation(shaderProgram, "normal");
+        gl.enableVertexAttribArray(
+            shaderProgram.normal
+        );
+        shaderProgram.kA =
+            gl.getAttribLocation(shaderProgram, "kA");
+        gl.enableVertexAttribArray(
+            shaderProgram.kA
+        );
+        shaderProgram.kD =
+            gl.getAttribLocation(shaderProgram, "kD");
+        gl.enableVertexAttribArray(
+            shaderProgram.kD
+        );
+        shaderProgram.kS =
+            gl.getAttribLocation(shaderProgram, "kS");
+        gl.enableVertexAttribArray(
+            shaderProgram.kS
+        );
+        shaderProgram.n =
+            gl.getAttribLocation(shaderProgram, "n");
+        gl.enableVertexAttribArray(
+            shaderProgram.n
+        );
 
         gl.enable(gl.DEPTH_TEST);
 
@@ -297,24 +329,30 @@ var graphics = (function() {
 
     function addBuffers(type, buffs) {
         vertexBuffs[type] = buffs.vertexBuff;
-        colorBuffs [type] = buffs.colorBuff;
+        ambBuffs   [type] = buffs.ambBuff;
+        diffBuffs  [type] = buffs.diffBuff;
+        specBuffs  [type] = buffs.specBuff;
+        nBuffs     [type] = buffs.nBuff;
         indexBuffs [type] = buffs.indexBuff;
         normalBuffs[type] = buffs.normalBuff;
     }
 
     // Draws a single shape
-    function drawShape(shape, pvMatrix, mMatrix) {
+    function drawShape(shape, pMatrix, vMatrix, mMatrixBase) {
         if (shape.type === "none") return;
 
         // Get buffers
         var vertexBuff = vertexBuffs[shape.type];
         var indexBuff  = indexBuffs [shape.type];
-        var colorBuff  = colorBuffs [shape.type];
+        var ambBuff    = ambBuffs   [shape.type];
+        var diffBuff   = diffBuffs  [shape.type];
+        var specBuff   = specBuffs  [shape.type];
+        var nBuff      = nBuffs     [shape.type];
         var normalBuff = normalBuffs[shape.type];
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
         gl.vertexAttribPointer(
-            shaderProgram.vertexPositionAttribute,
+            shaderProgram.position,
             vertexBuff.itemSize,
             gl.FLOAT,
             false,
@@ -324,7 +362,7 @@ var graphics = (function() {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuff);
         gl.vertexAttribPointer(
-            shaderProgram.vertexNormalAttribute,
+            shaderProgram.normal,
             normalBuff.itemSize,
             gl.FLOAT,
             false,
@@ -332,10 +370,40 @@ var graphics = (function() {
             0
         );
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuff);
+        gl.bindBuffer(gl.ARRAY_BUFFER, ambBuff);
         gl.vertexAttribPointer(
-            shaderProgram.vertexColorAttribute,
-            colorBuff.itemSize,
+            shaderProgram.kA,
+            ambBuff.itemSize,
+            gl.FLOAT,
+            false,
+            0,
+            0
+        );
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, diffBuff);
+        gl.vertexAttribPointer(
+            shaderProgram.kD,
+            diffBuff.itemSize,
+            gl.FLOAT,
+            false,
+            0,
+            0
+        );
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, specBuff);
+        gl.vertexAttribPointer(
+            shaderProgram.kS,
+            specBuff.itemSize,
+            gl.FLOAT,
+            false,
+            0,
+            0
+        );
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, nBuff);
+        gl.vertexAttribPointer(
+            shaderProgram.n,
+            nBuff.itemSize,
             gl.FLOAT,
             false,
             0,
@@ -346,13 +414,20 @@ var graphics = (function() {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuff);
 
         // Bind transformation
-        var mMatrix = mat4.clone(mMatrix);
+        var mMatrix = mat4.clone(mMatrixBase);
         mat4.translate(mMatrix, mMatrix, shape.trans);
         mat4.rotate(   mMatrix, mMatrix, shape.rot.angle, shape.rot.axis);
         mat4.scale(    mMatrix, mMatrix, shape.scale);
 
+        var vmMatrix = mat4.create();
+        mat4.multiply(vmMatrix, vMatrix, mMatrix);
+
+        var normalMatrix = mat4.clone(vmMatrix);
+        mat4.transpose(normalMatrix, normalMatrix);
+        mat4.invert(normalMatrix, normalMatrix);
+
         var pvmMatrix = mat4.create();
-        mat4.multiply(pvmMatrix, pvMatrix, mMatrix);
+        mat4.multiply(pvmMatrix, pMatrix, vmMatrix);
 
         gl.uniformMatrix4fv(
             shaderProgram.pvmMatrix,
@@ -360,9 +435,19 @@ var graphics = (function() {
             pvmMatrix
         );
         gl.uniformMatrix4fv(
-            shaderProgram.mMatrix,
+            shaderProgram.vmMatrix,
             false,
-            mMatrix
+            vmMatrix
+        );
+        gl.uniformMatrix4fv(
+            shaderProgram.vMatrix,
+            false,
+            vMatrix
+        );
+        gl.uniformMatrix4fv(
+            shaderProgram.normalMatrix,
+            false,
+            normalMatrix
         );
 
         // Draw
@@ -389,9 +474,10 @@ var graphics = (function() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Set light away direction
-        var lightAway = vec3.create();
-        vec3.normalize(lightAway, vec3.fromValues(cameraPosition[0], cameraPosition[1], cameraPosition[2]));
-        gl.uniform3fv(shaderProgram.lightAway, lightAway);
+        gl.uniform3fv(shaderProgram.lightPos, lightPos);
+        gl.uniform3fv(shaderProgram.lightAmbient, lightAmbient);
+        gl.uniform3fv(shaderProgram.lightDiffuse, lightDiffuse);
+        gl.uniform3fv(shaderProgram.lightSpecular, lightSpecular);
 
         // Generate perpective-view matrix
         var pMatrix = mat4.create();
@@ -404,10 +490,7 @@ var graphics = (function() {
 
         var vMatrix = mat4.create();
         mat4.lookAt(vMatrix, cameraPosition, cameraCOI, cameraUp);
-
-        var pvMatrix = mat4.create();
-        mat4.multiply(pvMatrix, pMatrix, tiltMatrix);
-        mat4.multiply(pvMatrix, pvMatrix, vMatrix);
+        mat4.multiply(vMatrix, tiltMatrix, vMatrix);
 
         // Walk hierarchy tree
         // while updating model matrix
@@ -426,7 +509,7 @@ var graphics = (function() {
             mat4.rotate   (mMatrix, mMatrix, node.rot.angle, node.rot.axis);
             mat4.scale    (mMatrix, mMatrix, node.scale);
             // draw node
-            drawShape(node.shape, pvMatrix, mMatrix);
+            drawShape(node.shape, pMatrix, vMatrix, mMatrix);
 
             if (node.children.length === 0) {
                 // pop mMatrix
@@ -437,7 +520,7 @@ var graphics = (function() {
             stack.push(...node.children);
         }
 
-        drawShape(floor.shape, pvMatrix, mat4.create());
+        drawShape(floor.shape, pMatrix, vMatrix, mat4.create());
     }
 
     // Clear all graphics data
