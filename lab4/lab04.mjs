@@ -64,22 +64,46 @@ var userHandler = (function() {
                 break;
 
             case 87: // "w"
-                graphics.moveRoot([0,0,-deltaMove]);
+                if (event.shiftKey) {
+                    graphics.moveLight([0,0,-deltaMove]);
+                } else {
+                    graphics.moveRoot([0,0,-deltaMove]);
+                }
                 break;
             case 83: // "s"
-                graphics.moveRoot([0,0,+deltaMove]);
+                if (event.shiftKey) {
+                    graphics.moveLight([0,0,+deltaMove]);
+                } else {
+                    graphics.moveRoot([0,0,+deltaMove]);
+                }
                 break;
             case 65: // "a"
-                graphics.moveRoot([-deltaMove,0,0]);
+                if (event.shiftKey) {
+                    graphics.moveLight([-deltaMove,0,0]);
+                } else {
+                    graphics.moveRoot([-deltaMove,0,0]);
+                }
                 break;
             case 68: // "d"
-                graphics.moveRoot([+deltaMove,0,0]);
+                if (event.shiftKey) {
+                    graphics.moveLight([+deltaMove,0,0]);
+                } else {
+                    graphics.moveRoot([+deltaMove,0,0]);
+                }
                 break;
             case 69: // "e"
-                graphics.moveRoot([0,+deltaMove,0]);
+                if (event.shiftKey) {
+                    graphics.moveLight([0,+deltaMove,0]);
+                } else {
+                    graphics.moveRoot([0,+deltaMove,0]);
+                }
                 break;
             case 81: // "q"
-                graphics.moveRoot([0,-deltaMove,0]);
+                if (event.shiftKey) {
+                    graphics.moveLight([0,-deltaMove,0]);
+                } else {
+                    graphics.moveRoot([0,-deltaMove,0]);
+                }
                 break;
 
             case 72: // "h"
@@ -169,7 +193,7 @@ var graphics = (function() {
     var   tiltMatrix     = mat4.create();
 
     // Light parameters
-    var lightPos = [-5, 5, -2];
+    var light;
     const lightAmbient  = [.5, .5, .5];
     const lightDiffuse  = [.5, .5, .5];
     const lightSpecular = [1, 1, 1];
@@ -273,6 +297,7 @@ var graphics = (function() {
         legRoot = roots.legNode;
         floor = roots.floorNode;
         wheelRoot = roots.wheelNode;
+        light = roots.lightNode;
     }
 
     function addBuffers(type, buffs) {
@@ -422,7 +447,7 @@ var graphics = (function() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Set light away direction
-        gl.uniform3fv(shaderProgram.lightPos, lightPos);
+        gl.uniform3fv(shaderProgram.lightPos, light.trans);
         gl.uniform3fv(shaderProgram.lightAmbient, lightAmbient);
         gl.uniform3fv(shaderProgram.lightDiffuse, lightDiffuse);
         gl.uniform3fv(shaderProgram.lightSpecular, lightSpecular);
@@ -464,6 +489,10 @@ var graphics = (function() {
         }
 
         drawShape(floor.shape, pMatrix, vMatrix, mat4.create());
+        var lightMatrix = mat4.create();
+        mat4.translate(lightMatrix, lightMatrix, light.trans);
+        mat4.scale(lightMatrix, lightMatrix, light.scale);
+        drawShape(light.shape, pMatrix, vMatrix, lightMatrix);
     }
 
     // Clear all graphics data
@@ -504,6 +533,12 @@ var graphics = (function() {
         root.trans[0] += dist[0];
         root.trans[1] += dist[1];
         root.trans[2] += dist[2];
+    }
+
+    function moveLight(dist) {
+        light.trans[0] += dist[0];
+        light.trans[1] += dist[1];
+        light.trans[2] += dist[2];
     }
 
     function rotateRoot(angle) {
@@ -551,6 +586,7 @@ var graphics = (function() {
         pitch: pitch,
         yaw: yaw,
         roll: roll,
+        moveLight: moveLight,
         moveRoot: moveRoot,
         rotateRoot: rotateRoot,
         rotateProp: rotateProp,

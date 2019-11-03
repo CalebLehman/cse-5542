@@ -232,6 +232,55 @@ function makeWheel(gl, radius, vSlices, hSlices) {
     return buffs;
 }
 
+function makeLight(gl, radius, vSlices, hSlices) {
+    var buffs = makeSphere(gl, radius, vSlices, hSlices);
+    
+    var ambient  = [];
+    var diffuse  = [];
+    var specular = [];
+    for (var i = 0; i < buffs.ambBuff.numItems; ++i) {
+        ambient.push(10, 10, 10, 1);
+        diffuse.push(0, 0, 0, 1);
+        specular.push(0, 0, 0, 1);
+    }
+    ambient  = new Float32Array(ambient);
+    diffuse  = new Float32Array(diffuse);
+    specular = new Float32Array(specular);
+    var ambBuff  = gl.createBuffer();
+    var diffBuff = gl.createBuffer();
+    var specBuff = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, ambBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        ambient,
+        gl.STATIC_DRAW
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, diffBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        diffuse,
+        gl.STATIC_DRAW
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, specBuff);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        specular,
+        gl.STATIC_DRAW
+    );
+    ambBuff.itemSize = 4;
+    ambBuff.numItems = ambient.length / ambBuff.itemSize;
+    diffBuff.itemSize = 4;
+    diffBuff.numItems = diffuse.length / diffBuff.itemSize;
+    specBuff.itemSize = 4;
+    specBuff.numItems = specular.length / specular.itemSize;
+
+    buffs.ambBuff  = ambBuff;
+    buffs.diffBuff = diffBuff;
+    buffs.specBuff = specBuff;
+
+    return buffs;
+}
+
 function makeSphere(gl, radius, vSlices, hSlices) {
     // Init vertices
     var vertices = [0, -1, 0];
@@ -438,4 +487,4 @@ function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
     }
 }
 
-export { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel };
+export { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel, makeLight };

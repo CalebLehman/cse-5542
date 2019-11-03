@@ -2,7 +2,7 @@ import { Node }
     from "./node.mjs"
 import { Shape }
     from "./shape.mjs"
-import { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel }
+import { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel, makeLight }
     from "./plane_buffers.mjs"
 import { graphics }
     from "./lab04.mjs"
@@ -58,6 +58,9 @@ function makeShapes(gl) {
     shapes["cockpit"] = new Shape("sphere", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.375, 0.5, 0.75]);
     shapes["rotor"] = new Shape("sphere", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.25, 0.25, 0.25]);
 
+    graphics.addBuffers("light", makeLight(gl, 1, 64, 64));
+    shapes["light"] = new Shape("light", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
+
     graphics.addBuffers("wheel", makeWheel(gl, 1, 64, 64));
     shapes["wheel"] = new Shape("wheel", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.15, 0.25, 0.25]);
 
@@ -94,6 +97,7 @@ function makePlaneScene(gl) {
     var axel = new Node(shapes["axel"], [0, 0, 0], {angle: 0.0, axis: [1, 0, 0]}, [1, 1, 1]);
 
     var floor = new Node(shapes["floor"], [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
+    var light = new Node(shapes["light"], [-5, 5, -2], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
 
     root.addChild(head);
     root.addChild(body);
@@ -124,6 +128,7 @@ function makePlaneScene(gl) {
         legNode:  legRoot,
         floorNode: floor,
         wheelNode: wheelRoot,
+        lightNode: light,
     }
 }
 
