@@ -437,3 +437,5 @@ function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
         normalBuff: normalBuff,
     }
 }
+
+export { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel };

@@ -1,6 +1,11 @@
 // Author - Caleb Lehman (lehman.346)
 // Date   - TODO
 
+import { Shape }
+    from "./shape.mjs"
+import { makePlaneScene }
+    from "./plane_hierarchy.mjs"
+
 var userHandler = (function() {
     // *** VARIABLES ***
     var mouseX;
@@ -13,7 +18,6 @@ var userHandler = (function() {
     const finAngle  = 0.15;
     const legAngle  = 0.10;
     const wheelAngle = 0.15;
-    var animLoops = [];
 
     // *** INITIALIZATION ***
     // Initialization function for user handler
@@ -28,59 +32,6 @@ var userHandler = (function() {
             userMouseDown,
             false
         );
-    }
-
-    function initAnim() {
-        // Propeller
-        animLoops.push(setInterval(
-            function() {
-                graphics.rotateProp(propAngle);
-                graphics.drawScene();
-            },
-            20
-        ));
-
-        // Movement
-        graphics.setRoot([0, 1.5, 10]);
-        graphics.setRotRoot(0.2);
-        graphics.rotateFin(-0.2);
-        var vertSpeed = 0;
-        var rotSpeed = 0;
-        var camSpeed = 0;
-        animLoops.push(setInterval(
-            function() {
-                graphics.moveRoot([0, 0, -deltaMove]);
-
-                graphics.moveRoot([0, vertSpeed, 0]);
-                vertSpeed += 0.0002;
-
-                graphics.rotRoot(rotSpeed);
-                rotSpeed += 0.00002;
-
-                graphics.pitch(-camSpeed);
-                graphics.yaw(-camSpeed*1.3);
-                camSpeed += 0.00002;
-
-                graphics.drawScene();
-            },
-            20
-        ));
-        animLoops.push(setInterval(
-            function() {
-                graphics.setRoot([0, 1.5, 10]);
-                graphics.setRotRoot(0.2);
-
-                vertSpeed = 0;
-                rotSpeed = 0;
-
-                graphics.setPitch(0);
-                graphics.setYaw(0);
-                camSpeed = 0;
-
-                graphics.drawScene();
-            },
-            4000,
-        ));
     }
 
     // *** HANDLERS ***
@@ -203,7 +154,6 @@ var userHandler = (function() {
     return {
         // *** PUBLIC ***
         init: init,
-        initAnim: initAnim
     };
 }());
 
@@ -216,9 +166,7 @@ var graphics = (function() {
     const cameraPosition = [-5, 3, -2];
     const cameraCOI      = [0, 1, 1];
     const cameraUp       = [0, 1, 0];
-    var   cameraPitch    = 0.0;
-    var   cameraYaw      = 0.0;
-    var   cameraRoll     = 0.0;
+    var   tiltMatrix     = mat4.create();
 
     // Light parameters
     var lightPos = [-5, 5, -2];
@@ -483,11 +431,6 @@ var graphics = (function() {
         var pMatrix = mat4.create();
         mat4.perspective(pMatrix, 1.0, width / height, 0.1, 100);
 
-        var tiltMatrix = mat4.create();
-        mat4.rotate(tiltMatrix, tiltMatrix, cameraPitch, [1, 0, 0]);
-        mat4.rotate(tiltMatrix, tiltMatrix, cameraYaw,   [0, 1, 0]);
-        mat4.rotate(tiltMatrix, tiltMatrix, cameraRoll,  [0, 0, 1]);
-
         var vMatrix = mat4.create();
         mat4.lookAt(vMatrix, cameraPosition, cameraCOI, cameraUp);
         mat4.multiply(vMatrix, tiltMatrix, vMatrix);
@@ -526,9 +469,7 @@ var graphics = (function() {
     // Clear all graphics data
     function clear() {
         clrColor = [0.7, 0.8, 1, 1];
-        cameraPitch = 0.0;
-        cameraYaw   = 0.0;
-        cameraRoll  = 0.0;
+        tiltMatrix = mat4.create();
         if (root) {
             root.trans = [0, 1.5, 0];
             propRoot.rot.angle = 0.0;
@@ -542,23 +483,21 @@ var graphics = (function() {
     }
 
     function pitch(angle) {
-        cameraPitch += angle;
-    }
-
-    function setPitch(angle) {
-        cameraPitch = angle;
+        var rotation = mat4.create();
+        mat4.rotate(rotation, rotation, angle, [1, 0, 0]);
+        mat4.multiply(tiltMatrix, rotation, tiltMatrix);
     }
 
     function yaw(angle) {
-        cameraYaw += angle;
-    }
-
-    function setYaw(angle) {
-        cameraYaw = angle;
+        var rotation = mat4.create();
+        mat4.rotate(rotation, rotation, angle, [0, 1, 0]);
+        mat4.multiply(tiltMatrix, rotation, tiltMatrix);
     }
 
     function roll(angle) {
-        cameraRoll += angle;
+        var rotation = mat4.create();
+        mat4.rotate(rotation, rotation, angle, [0, 0, 1]);
+        mat4.multiply(tiltMatrix, rotation, tiltMatrix);
     }
 
     function moveRoot(dist) {
@@ -567,16 +506,8 @@ var graphics = (function() {
         root.trans[2] += dist[2];
     }
 
-    function setRoot(pos) {
-        root.trans = pos;
-    }
-
-    function rotRoot(angle) {
+    function rotateRoot(angle) {
         root.rot.angle += angle;
-    }
-
-    function setRotRoot(angle) {
-        root.rot.angle = angle;
     }
 
     function rotateProp(angle) {
@@ -618,17 +549,15 @@ var graphics = (function() {
         setBackground: setBackground,
 
         pitch: pitch,
-        setPitch: setPitch,
         yaw: yaw,
-        setYaw: setYaw,
         roll: roll,
         moveRoot: moveRoot,
-        setRoot: setRoot,
-        rotRoot: rotRoot,
-        setRotRoot: setRotRoot,
+        rotateRoot: rotateRoot,
         rotateProp: rotateProp,
         rotateFin: rotateFin,
         rotateLegs: rotateLegs,
         rotateWheels: rotateWheels,
     };
 }());
+
+export { graphics, userHandler };

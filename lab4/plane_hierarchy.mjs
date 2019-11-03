@@ -1,3 +1,12 @@
+import { Node }
+    from "./node.mjs"
+import { Shape }
+    from "./shape.mjs"
+import { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel }
+    from "./plane_buffers.mjs"
+import { graphics }
+    from "./lab04.mjs"
+
 var propellerShape;
 var legShape;
 var axelShape;
@@ -117,3 +126,5 @@ function makePlaneScene(gl) {
         wheelNode: wheelRoot,
     }
 }
+
+export { makePlaneScene };

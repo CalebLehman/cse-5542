@@ -14,3 +14,5 @@ class Node {
         child.parent = this;
     }
 }
+
+export { Node };

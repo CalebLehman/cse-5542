@@ -6,6 +6,8 @@
 <html>
 
 <head>
+    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+
     <title>Lab 04 Caleb Lehman (.346)</title>
     
     <!-- fragment shader -->
@@ -128,12 +130,10 @@
     <p>Full usage is documented in <a href="README.md">README</a></p>
 
     <script type="text/javascript" src="gl-matrix-min.js"></script>
-    <script type="text/javascript" src="node.js"></script>
-    <script type="text/javascript" src="shape.js"></script>
-    <script type="text/javascript" src="plane_buffers.js"></script>
-    <script type="text/javascript" src="plane_hierarchy.js"></script>
-    <script type="text/javascript" src="lab04.js"></script>
-    <script type="text/javascript">
+    <script type="module" src="lab04.mjs"></script>
+    <script type="module">
+        import { graphics, userHandler }
+            from "./lab04.mjs"
         graphics.init();
         userHandler.init();
     </script>

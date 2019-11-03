@@ -6,3 +6,5 @@ class Shape {
         this.scale = scale;
     }
 }
+
+export { Shape };
