@@ -37,7 +37,7 @@ $ python -m SimpleHTTPServer 8080   # for python 2
   - `setup_shaders.js`: Shader setup, written by Prof. Shen
   - `shape.mjs`: Javascript module for shape class used to encapsulate shape types
   - `gl-matrix-min.js`: Javascript which defines the glMatrix library
-  - `src`: Directory with Javascript files implementing glMatrix
+  - `src/`: Directory with Javascript files implementing glMatrix
   - `model_plane.obj`: Wavefront `.obj` file for more complex plane model
   - `load_obj.mjs`: Code for loading model from (a simplified version of the ) `.obj` format
 
