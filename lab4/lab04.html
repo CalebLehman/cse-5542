@@ -7,6 +7,41 @@
 
 <head>
     <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+    <style type="text/css">
+        body {
+            background-color: lightgrey;
+        }
+        @font-face {
+        font-family: "Computer Modern";
+        }
+        @font-face {
+        font-family: "Computer Modern";
+        font-weight: bold;
+        }
+        @font-face {
+        font-family: "Computer Modern";
+        font-style: italic, oblique;
+        }
+        @font-face {
+        font-family: "Computer Modern";
+        font-weight: bold;
+        font-style: italic, oblique;
+        }
+
+        body {
+        font-family: "Computer Modern", sans-serif;
+        }
+    </style>
+    <!--
+    <style>
+        body {background-color: lightgrey;}
+        h1   {color: black, font-family:
+        p    {
+        b    {
+        .output P
+        li {
+    </style>
+    -->
 
     <title>Lab 04 Caleb Lehman (.346)</title>
     
@@ -93,38 +128,46 @@
 
 <!--body onload="graphics.init(); userHandler.init();"-->
 <body>
-    <h3>Toy Planes (JSON model and 3D lighting)</h3>
-    <h4>CSE 5542 Lab 4</h4>
-    <div style="float:left; padding-right:20px;">
-    <canvas id="canvas" style="border:2px solid #000000;" width="500" height="500"></canvas><br/>
+    <h3>CSE 5542 Lab 4: Planes (JSON model and 3D lighting)</h3>
+
+    <div style="background-color:white; text-align:center">
+
+    <div style="display:inline-block; padding-right:20px; padding-top:20px; padding-bottom:20px;">
+    <canvas id="canvas" style="border:2px solid #000000;" width="900" height="500"></canvas><br/>
     </div>
 
-    <div style="float:left">
-
-    <h4>Control Reminders:</h4>
-    <p><code>c</code>: Reset</p>
-    <h5>Plane movement</h5>
-    <ul>
+    <div style="display:inline-block; vertical-align:top; text-align:left;">
+    <h4>Controls:</h4>
+    <p><code>c</code>: Reset scene</p>
+    <h5>(Toy) Plane movement</h5>
+    <ul style="margin-top:-15px">
         <li><code>w/s</code>: Move the plane foward and backward (relative to its local coordinates)</li>
         <li><code>a/d</code>: Move the plane left and right (relative to its local coordinates)</li>
         <li><code>q/e</code>: Move the plane down and up (relative to its local coordinates)</li>
     </ul>
+    <h5>Light movement</h5>
+    <ul style="margin-top:-15px">
+        <li><code>W/S</code>: Move the light along <code>+z/-z</code> (world coordinates)</li>
+        <li><code>A/D</code>: Move the light along <code>+x/-x</code> (world coordinates)</li>
+        <li><code>Q/E</code>: Move the light along <code>+y/-y</code> (world coordinates)</li>
+    </ul>
     <h5>Camera adjustment (all relative to camera frame)</h5>
-    <ul>
+    <ul style="margin-top:-15px">
         <li><code>R/r</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">roll</a> of the camera</li>
         <li><code>P/p</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">pitch</a> of the camera</li>
         <li><code>Y/y</code>: Alter the <a href="https://en.wikipedia.org/wiki/Aircraft_principal_axes">yaw</a> of the camera</li>
     </ul>
     <h5>Misc. movements</h5>
-    <ul>
-        <li><code>H/h</code>: Rotate the propeller</li>
-        <li><code>J/j</code>: Rotate the back fin</li>
-        <li><code>K/k</code>: Rotate the legs</li>
-        <li><code>L/l</code>: Rotate the wheels</li>
+    <ul style="margin-top:-15px">
+        <li><code>H/h</code>: Rotate toy plane propeller</li>
+        <li><code>J/j</code>: Rotate toy plane back fin</li>
+        <li><code>K/k</code>: Rotate toy plane legs</li>
+        <li><code>L/l</code>: Rotate toy plane wheels</li>
     </ul>
     </div>
 
     <br style="clear:both" />
+    </div>
 
     <h2>Usage:</h2>
     <p>Full usage is documented in <a href="README.md">README</a></p>

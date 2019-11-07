@@ -61,9 +61,9 @@ function plasticBuffers(gl, numVertices, color) {
     }
 }
 
-function makeFloor(gl, size) {
-    var buffs = makeCube(gl, size);
-    var plasticBuffs = plasticBuffers(gl, buffs.ambBuff.numItems, [0.7, 0.7, 0.7, 1]);
+function makeFloor(gl, size, color) {
+    var buffs = makeCube(gl, size, color);
+    var plasticBuffs = plasticBuffers(gl, buffs.ambBuff.numItems, color);
 
     buffs.ambBuff  = plasticBuffs.ambBuff;
     buffs.diffBuff = plasticBuffs.diffBuff;
@@ -72,7 +72,7 @@ function makeFloor(gl, size) {
     return buffs;
 }
 
-function makeCube(gl, size) {
+function makeCube(gl, size, color) {
     // Init vertices
     var vertices = new Float32Array(
         [ 1,  1,  1
@@ -113,7 +113,7 @@ function makeCube(gl, size) {
     vertexBuff.numItems = vertices.length / vertexBuff.itemSize;
 
     // Init colors
-    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, [1, 0, 0, 1]);
+    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, color);
 
     // Init indices
     var indices = new Uint16Array(
@@ -191,7 +191,7 @@ function makeCube(gl, size) {
 }
 
 function makeWheel(gl, radius, vSlices, hSlices) {
-    var buffs = makeSphere(gl, radius, vSlices, hSlices);
+    var buffs = makeSphere(gl, radius, vSlices, hSlices, [0, 0, 0, 0]);
     
     var availColors = [
         [1, 0, 0, 1],
@@ -233,13 +233,14 @@ function makeWheel(gl, radius, vSlices, hSlices) {
 }
 
 function makeLight(gl, radius, vSlices, hSlices) {
-    var buffs = makeSphere(gl, radius, vSlices, hSlices);
+    var buffs = makeSphere(gl, radius, vSlices, hSlices, [0, 0, 0, 0]);
     
     var ambient  = [];
     var diffuse  = [];
     var specular = [];
     for (var i = 0; i < buffs.ambBuff.numItems; ++i) {
-        ambient.push(10, 10, 10, 1);
+        var c = 1.7 + 1.2*Math.random();;
+        ambient.push(c, c, c, 1);
         diffuse.push(0, 0, 0, 1);
         specular.push(0, 0, 0, 1);
     }
@@ -281,7 +282,7 @@ function makeLight(gl, radius, vSlices, hSlices) {
     return buffs;
 }
 
-function makeSphere(gl, radius, vSlices, hSlices) {
+function makeSphere(gl, radius, vSlices, hSlices, color) {
     // Init vertices
     var vertices = [0, -1, 0];
     for (var hSlice = 0; hSlice < hSlices; ++hSlice) {
@@ -304,7 +305,7 @@ function makeSphere(gl, radius, vSlices, hSlices) {
     vertexBuff.numItems = vertices.length / vertexBuff.itemSize;
     
     // Init colors
-    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, [0, 0, 1, 1]);
+    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, color);
 
     // Init indices
     function indexer(h, v) {
@@ -375,7 +376,7 @@ function makeSphere(gl, radius, vSlices, hSlices) {
     }
 }
 
-function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
+function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices, color) {
     // Init vertices
     var vertices = [0, -height / 2.0, 0];
     for (var vSlice = 0; vSlice < vSlices; ++vSlice) {
@@ -409,7 +410,7 @@ function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
     vertexBuff.numItems = vertices.length / vertexBuff.itemSize;
 
     // Init colors
-    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, [0, 1, 0, 1]);
+    var plasticBuffs = plasticBuffers(gl, vertexBuff.numItems, color);
 
     // Init indices
     var indices = [];
@@ -487,4 +488,4 @@ function makeCylinder(gl, bRadius, tRadius, height, vSlices, hSlices) {
     }
 }
 
-export { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel, makeLight };
+export { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel, makeLight, plasticBuffers };

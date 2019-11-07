@@ -6,6 +6,8 @@ import { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel, makeLight }
     from "./plane_buffers.mjs"
 import { graphics }
     from "./lab04.mjs"
+import { loadModelBuffs }
+    from "./load_obj.mjs"
 
 var propellerShape;
 var legShape;
@@ -33,6 +35,12 @@ const legLen  = 1.2;
 
 var shapes = new Object();
 function makeShapes(gl) {
+    //loadModelBuffs("http://web.cse.ohio-state.edu/~lehman.346/model_temp.obj");
+    var buffs = new Object();
+    loadModelBuffs(gl, "./model_plane.obj", "model-plane");
+    //loadModelBuffs(gl, "http://web.cse.ohio-state.edu/~lehman.346/model_plane.obj", "model-plane");
+    shapes["model-plane"] = new Shape("model-plane", [0, 0, 0], {angle: -1.2, axis: [0, 1, 0]}, [1, 1, 1]);
+
     shapes["null"] = new Shape(
         "none",
         [0, 0, 0],
@@ -41,20 +49,20 @@ function makeShapes(gl) {
     );
 
     shapes["head"] = new Shape("head", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
-    graphics.addBuffers("head", makeCylinder(gl, headBot, headTop, headLen, 64, 2));
+    graphics.addBuffers("head", makeCylinder(gl, headBot, headTop, headLen, 64, 2, [0, 1, 0, 1]));
     shapes["body"] = new Shape("body", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
-    graphics.addBuffers("body", makeCylinder(gl, bodyBot, bodyTop, bodyLen, 64, 2));
+    graphics.addBuffers("body", makeCylinder(gl, bodyBot, bodyTop, bodyLen, 64, 2, [0, 1, 0, 1]));
 
-    graphics.addBuffers("cube", makeCube(gl, 1));
+    graphics.addBuffers("cube", makeCube(gl, 1, [1, 0, 0, 1]));
     shapes["wing"] = new Shape("cube", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [wingLen / 2, 0.05, 0.5]);
     shapes["fin"] = new Shape("cube", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [finLen / 2, 0.05, 0.3]);
     shapes["prop"] = new Shape("cube", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [propLen / 2, 0.15, 0.05]);
     shapes["leg"] = new Shape("cube", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.05, legLen / 2, 0.15]);
 
-    graphics.addBuffers("floor", makeFloor(gl, 1));
-    shapes["floor"] = new Shape("floor", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [5, 0.01, 5]);
+    graphics.addBuffers("floor", makeFloor(gl, 1, [0.7, 0.7, 0.7, 1]));
+    shapes["floor"] = new Shape("floor", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [10, 0.01, 10]);
 
-    graphics.addBuffers("sphere", makeSphere(gl, 1, 64, 64));
+    graphics.addBuffers("sphere", makeSphere(gl, 1, 64, 64, [0, 0, 1, 1]));
     shapes["cockpit"] = new Shape("sphere", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.375, 0.5, 0.75]);
     shapes["rotor"] = new Shape("sphere", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.25, 0.25, 0.25]);
 
@@ -64,7 +72,7 @@ function makeShapes(gl) {
     graphics.addBuffers("wheel", makeWheel(gl, 1, 64, 64));
     shapes["wheel"] = new Shape("wheel", [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [0.15, 0.25, 0.25]);
 
-    graphics.addBuffers("axel", makeCylinder(gl, 0.1, 0.1, 1, 64, 2));
+    graphics.addBuffers("axel", makeCylinder(gl, 0.1, 0.1, 1, 64, 2, [0, 1, 0, 1]));
     shapes["axel"] = new Shape("axel", [0, 0, 0], {angle: 1.57, axis: [0, 0, 1]}, [1, 1, 1]);
 }
 
@@ -73,7 +81,7 @@ function makePlaneScene(gl) {
     makeShapes(gl);
 
     // Create hierarchy for the scene
-    var root = new Node(shapes["null"], [0, 1.5, 0], {angle: 0.2, axis: [1, 0, 0]}, [1, 1, 1]);
+    var root = new Node(shapes["null"], [-2, 1.5, 3.5], {angle: 0.2, axis: [1, 0, 0]}, [1, 1, 1]);
     var head = new Node(shapes["head"], [0, 0, -headLen/2], {angle: -1.57, axis: [1, 0, 0]}, [1, 1, 1]);
     var body = new Node(shapes["body"], [0, 0, +bodyLen/2], {angle: +1.57, axis: [1, 0, 0]}, [1, 1, 1]);
     var wing1 = new Node(shapes["wing"], [+wingLen/2, 0, wingOff], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
@@ -97,7 +105,8 @@ function makePlaneScene(gl) {
     var axel = new Node(shapes["axel"], [0, 0, 0], {angle: 0.0, axis: [1, 0, 0]}, [1, 1, 1]);
 
     var floor = new Node(shapes["floor"], [0, 0, 0], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
-    var light = new Node(shapes["light"], [-5, 5, -2], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
+    var light = new Node(shapes["light"], [-3, 5, +2], {angle: 0.0, axis: [0, 1, 0]}, [1, 1, 1]);
+    var modelPlane = new Node(shapes["model-plane"], [-1.5, 2,-1.5], {angle: 0.0, axis: [0, 1, 0]}, [0.5, 0.5, 0.5]);
 
     root.addChild(head);
     root.addChild(body);
@@ -129,6 +138,7 @@ function makePlaneScene(gl) {
         floorNode: floor,
         wheelNode: wheelRoot,
         lightNode: light,
+        modelNode: modelPlane,
     }
 }
 

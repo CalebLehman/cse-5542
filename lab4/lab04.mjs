@@ -187,7 +187,7 @@ var graphics = (function() {
     var shaderProgram;
 
     // Initial camera parameters
-    const cameraPosition = [-5, 3, -2];
+    const cameraPosition = [-9, 5, -2];
     const cameraCOI      = [0, 1, 1];
     const cameraUp       = [0, 1, 0];
     var   tiltMatrix     = mat4.create();
@@ -199,6 +199,7 @@ var graphics = (function() {
     const lightSpecular = [1, 1, 1];
 
     // Current list of shapes to draw
+    var modelPlane;
     var root;
     var propRoot;
     var finRoot;
@@ -298,6 +299,7 @@ var graphics = (function() {
         floor = roots.floorNode;
         wheelRoot = roots.wheelNode;
         light = roots.lightNode;
+        modelPlane = roots.modelNode;
     }
 
     function addBuffers(type, buffs) {
@@ -493,6 +495,14 @@ var graphics = (function() {
         mat4.translate(lightMatrix, lightMatrix, light.trans);
         mat4.scale(lightMatrix, lightMatrix, light.scale);
         drawShape(light.shape, pMatrix, vMatrix, lightMatrix);
+
+        if (vertexBuffs[modelPlane.shape.type]) {
+            var modelMatrix = mat4.create();
+            mat4.translate(modelMatrix, modelMatrix, modelPlane.trans);
+            mat4.rotate(modelMatrix, modelMatrix, modelPlane.rot.angle, modelPlane.rot.axis);
+            mat4.scale(modelMatrix, modelMatrix, modelPlane.scale);
+            drawShape(modelPlane.shape, pMatrix, vMatrix, modelMatrix);
+        }
     }
 
     // Clear all graphics data
@@ -500,9 +510,12 @@ var graphics = (function() {
         clrColor = [0.7, 0.8, 1, 1];
         tiltMatrix = mat4.create();
         if (root) {
-            root.trans = [0, 1.5, 0];
+            root.trans = [-2, 1.5, 3.5];
             propRoot.rot.angle = 0.0;
             finRoot.rot.angle = 0.0;
+        }
+        if (light) {
+            light.trans = [-3, 5, 2];
         }
     }
 
