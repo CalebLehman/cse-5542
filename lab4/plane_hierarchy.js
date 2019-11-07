@@ -1,13 +1,13 @@
 import { Node }
-    from "./node.mjs"
+    from "./node.js"
 import { Shape }
-    from "./shape.mjs"
+    from "./shape.js"
 import { makeCube, makeSphere, makeCylinder, makeFloor, makeWheel, makeLight }
-    from "./plane_buffers.mjs"
+    from "./plane_buffers.js"
 import { graphics }
-    from "./lab04.mjs"
+    from "./lab04.js"
 import { loadModelBuffs }
-    from "./load_obj.mjs"
+    from "./load_obj.js"
 
 var propellerShape;
 var legShape;

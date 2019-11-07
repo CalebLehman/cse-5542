@@ -1,7 +1,7 @@
 import { plasticBuffers }
-    from "./plane_buffers.mjs"
+    from "./plane_buffers.js"
 import { graphics }
-    from "./lab04.mjs"
+    from "./lab04.js"
 
 function loadModelBuffs(gl, filename, modelName) {
     var request = new XMLHttpRequest();

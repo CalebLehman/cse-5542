@@ -2,9 +2,9 @@
 // Date   - 11/7/2019
 
 import { Shape }
-    from "./shape.mjs"
+    from "./shape.js"
 import { makePlaneScene }
-    from "./plane_hierarchy.mjs"
+    from "./plane_hierarchy.js"
 
 var userHandler = (function() {
     // *** VARIABLES ***

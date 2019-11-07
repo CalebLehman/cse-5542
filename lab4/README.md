@@ -28,18 +28,18 @@ $ python -m SimpleHTTPServer 8080   # for python 2
 
   - `README.md`: Description of project submission
   - `lab04.html`: Main HTML page
-  - `lab04.mjs`: Main javascript module
-  - `node.mjs`: Javascript module for node class used to model hierarchy
-  - `plane_buffers.mjs`: Javascript module with methods to construct buffers
+  - `lab04.js`: Main javascript module
+  - `node.js`: Javascript module for node class used to model hierarchy
+  - `plane_buffers.js`: Javascript module with methods to construct buffers
     for plane object and other objects in the scene
-  - `plane_hierarchy.mjs`: Javascript module with methods to construct plane
+  - `plane_hierarchy.js`: Javascript module with methods to construct plane
     hierarchy and other scene hierarchy
   - `setup_shaders.js`: Shader setup, written by Prof. Shen
-  - `shape.mjs`: Javascript module for shape class used to encapsulate shape types
+  - `shape.js`: Javascript module for shape class used to encapsulate shape types
   - `gl-matrix-min.js`: Javascript which defines the glMatrix library
   - `src/`: Directory with Javascript files implementing glMatrix
   - `model_plane.obj`: Wavefront `.obj` file for more complex plane model
-  - `load_obj.mjs`: Code for loading model from (a simplified version of the ) `.obj` format
+  - `load_obj.js`: Code for loading model from (a simplified version of the ) `.obj` format
 
 ## Usage
 
