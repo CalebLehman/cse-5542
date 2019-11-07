@@ -12,10 +12,11 @@ namely, camera rotation, "toy" plane position, and light position.
 
 ## Testing
 
-This lab was tested on Windows 10 with the Chrome browser.
-To avoid issues with CORS, I developed/tested using a local
-HTTP server. There are other ways to work around it, but if
-you have a python installation, I recommend:
+This lab was tested (successfully) on Windows 10 with the Chrome and Firefox
+browsers.  Will not work on Internet Explorer, which does not support
+JavaScript modules.  To avoid issues with CORS, I developed/tested using a
+local HTTP server. There are other ways to work around it, but if you have a
+python installation, I recommend:
 
 ```
 $ cd <project-dir>
